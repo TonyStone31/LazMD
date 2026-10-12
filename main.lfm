@@ -1,0 +1,333 @@
+object frmMain: TfrmMain
+  Left = 300
+  Height = 720
+  Top = 140
+  Width = 920
+  AllowDropFiles = True
+  Caption = 'LazMD'
+  ClientHeight = 720
+  ClientWidth = 920
+  Menu = mnuMain
+  Position = poScreenCenter
+  LCLVersion = '5.99.0.0'
+  OnCloseQuery = FormCloseQuery
+  OnCreate = FormCreate
+  OnDropFiles = FormDropFiles
+  object pnlTools: TPanel
+    Left = 0
+    Height = 38
+    Top = 0
+    Width = 920
+    Align = alTop
+    BevelOuter = bvNone
+    ClientHeight = 38
+    ClientWidth = 920
+    TabOrder = 0
+    object btnOpen: TButton
+      Left = 8
+      Height = 28
+      Top = 5
+      Width = 70
+      Caption = 'Open...'
+      TabOrder = 0
+      OnClick = FileOpenClick
+    end
+    object btnSave: TButton
+      Left = 82
+      Height = 28
+      Top = 5
+      Width = 56
+      Caption = 'Save'
+      TabOrder = 1
+      OnClick = FileSaveClick
+    end
+    object sbView: TSpeedButton
+      Left = 152
+      Height = 28
+      Hint = 'The rendered page'
+      Top = 5
+      Width = 52
+      Caption = 'View'
+      Down = True
+      GroupIndex = 1
+      ShowHint = True
+      ParentShowHint = False
+      OnClick = ModeClick
+    end
+    object sbEdit: TSpeedButton
+      Tag = 1
+      Left = 204
+      Height = 28
+      Hint = 'Edit the rendered page in place'
+      Top = 5
+      Width = 48
+      Caption = 'Edit'
+      GroupIndex = 1
+      ShowHint = True
+      ParentShowHint = False
+      OnClick = ModeClick
+    end
+    object sbRaw: TSpeedButton
+      Tag = 2
+      Left = 252
+      Height = 28
+      Hint = 'The Markdown source'
+      Top = 5
+      Width = 48
+      Caption = 'Raw'
+      GroupIndex = 1
+      ShowHint = True
+      ParentShowHint = False
+      OnClick = ModeClick
+    end
+    object btnKindH1: TSpeedButton
+      Tag = 1
+      Left = 316
+      Height = 28
+      Hint = 'Heading 1'
+      Top = 5
+      Width = 32
+      AllowAllUp = True
+      Caption = 'H1'
+      GroupIndex = 7
+      ShowHint = True
+      ParentShowHint = False
+      Visible = False
+      OnClick = btnKindClick
+    end
+    object btnKindH2: TSpeedButton
+      Tag = 2
+      Left = 350
+      Height = 28
+      Hint = 'Heading 2'
+      Top = 5
+      Width = 32
+      AllowAllUp = True
+      Caption = 'H2'
+      GroupIndex = 7
+      ShowHint = True
+      ParentShowHint = False
+      Visible = False
+      OnClick = btnKindClick
+    end
+    object btnKindBullet: TSpeedButton
+      Tag = 7
+      Left = 384
+      Height = 28
+      Hint = 'Bullet list'
+      Top = 5
+      Width = 28
+      AllowAllUp = True
+      Caption = #8226
+      GroupIndex = 7
+      ShowHint = True
+      ParentShowHint = False
+      Visible = False
+      OnClick = btnKindClick
+    end
+    object btnKindNumber: TSpeedButton
+      Tag = 8
+      Left = 414
+      Height = 28
+      Hint = 'Numbered list'
+      Top = 5
+      Width = 28
+      AllowAllUp = True
+      Caption = '1.'
+      GroupIndex = 7
+      ShowHint = True
+      ParentShowHint = False
+      Visible = False
+      OnClick = btnKindClick
+    end
+    object btnKindQuote: TSpeedButton
+      Tag = 9
+      Left = 444
+      Height = 28
+      Hint = 'Quote'
+      Top = 5
+      Width = 24
+      AllowAllUp = True
+      Caption = #8221
+      GroupIndex = 7
+      ShowHint = True
+      ParentShowHint = False
+      Visible = False
+      OnClick = btnKindClick
+    end
+    object btnKindCode: TSpeedButton
+      Tag = 10
+      Left = 470
+      Height = 28
+      Hint = 'Code'
+      Top = 5
+      Width = 30
+      AllowAllUp = True
+      Caption = '{}'
+      GroupIndex = 7
+      ShowHint = True
+      ParentShowHint = False
+      Visible = False
+      OnClick = btnKindClick
+    end
+    object btnTable: TSpeedButton
+      Left = 504
+      Height = 28
+      Hint = 'Insert a 3'#215'2 table - Tab hops cells, Enter adds a row'
+      Top = 5
+      Width = 48
+      Caption = 'Table'
+      ShowHint = True
+      ParentShowHint = False
+      Visible = False
+      OnClick = btnTableClick
+    end
+    object lblFile: TInkLabel
+      Left = 568
+      Height = 18
+      Top = 10
+      Width = 3
+      Caption = ' '
+      AutoSize = True
+      ParentColor = False
+    end
+  end
+  object pageView: TInkPage
+    Cursor = crIBeam
+    Left = 0
+    Height = 682
+    Top = 38
+    Width = 920
+    OnLinkClick = PageLinkClick
+    Align = alClient
+    Color = clWindow
+    Font.Color = clWindowText
+    Font.Height = -15
+    ParentColor = False
+    ParentFont = False
+    TabOrder = 1
+  end
+  object reDoc: TInkRichEdit
+    Left = 0
+    Height = 682
+    Top = 38
+    Width = 920
+    Align = alClient
+    Font.Height = -15
+    ParentFont = False
+    TabOrder = 2
+    Visible = False
+    OnChange = DocChanged
+    OnSelectionChange = DocSelectionChange
+  end
+  object memRaw: TInkCodeMemo
+    Left = 0
+    Height = 682
+    Top = 38
+    Width = 920
+    Align = alClient
+    Font.Height = -13
+    ParentFont = False
+    TabOrder = 3
+    Visible = False
+    WantTabs = True
+    TextHint = 'Type Markdown here - # headings, **bold**, - lists, | tables |'
+    OnChange = RawChanged
+    OnGetCharAttrs = MdCharAttrs
+  end
+  object mnuMain: TMainMenu
+    Left = 680
+    Top = 80
+    object mnuFile: TMenuItem
+      Caption = '&File'
+      object miNew: TMenuItem
+        Caption = '&New'
+        ShortCut = 16462
+        OnClick = FileNewClick
+      end
+      object miOpen: TMenuItem
+        Caption = '&Open...'
+        ShortCut = 16463
+        OnClick = FileOpenClick
+      end
+      object miSave: TMenuItem
+        Caption = '&Save'
+        ShortCut = 16467
+        OnClick = FileSaveClick
+      end
+      object miSaveAs: TMenuItem
+        Caption = 'Save &As...'
+        ShortCut = 24659
+        OnClick = FileSaveAsClick
+      end
+      object miSep1: TMenuItem
+        Caption = '-'
+      end
+      object miRegister: TMenuItem
+        Caption = 'Open &Markdown files with LazMD'
+        OnClick = RegisterClick
+      end
+      object miUnregister: TMenuItem
+        Caption = 'Stop opening Markdown files with LazMD'
+        OnClick = UnregisterClick
+      end
+      object miSep2: TMenuItem
+        Caption = '-'
+      end
+      object miQuit: TMenuItem
+        Caption = '&Quit'
+        ShortCut = 16465
+        OnClick = FileQuitClick
+      end
+    end
+    object mnuView: TMenuItem
+      Caption = '&View'
+      object miModeView: TMenuItem
+        Caption = '&Rendered page'
+        ShortCut = 16433
+        OnClick = ModeClick
+      end
+      object miModeEdit: TMenuItem
+        Tag = 1
+        Caption = '&Edit the page'
+        ShortCut = 16434
+        OnClick = ModeClick
+      end
+      object miModeRaw: TMenuItem
+        Tag = 2
+        Caption = 'Ra&w source'
+        ShortCut = 16435
+        OnClick = ModeClick
+      end
+    end
+  end
+  object dlgOpen: TOpenDialog
+    Filter = 'Markdown|*.md;*.markdown|All files|*'
+    Left = 680
+    Top = 140
+  end
+  object dlgSave: TSaveDialog
+    DefaultExt = '.md'
+    Filter = 'Markdown|*.md;*.markdown|All files|*'
+    Options = [ofOverwritePrompt, ofEnableSizing, ofViewDetail]
+    Left = 680
+    Top = 200
+  end
+  object FileAss: TFileAssMan
+    ApplicationID = 'io.github.tonystone31.lazmd'
+    ApplicationName = 'LazMD'
+    ApplicationDescription = 'Markdown viewer and editor'
+    ShowInApplicationMenu = True
+    LinuxApplicationIcon = 'icons/lazmd.svg'
+    FileTypes = <
+      item
+        Extension = '.md'
+        Description = 'Markdown document'
+        MimeType = 'text/markdown'
+        TypeIdentifier = 'io.github.tonystone31.lazmd.document'
+        LinuxIcon = 'icons/lazmd.svg'
+      end>
+    Left = 680
+    Top = 260
+  end
+end

@@ -1,0 +1,5 @@
+lazmd
+lazmd.lps
+lib/
+backup/
+*.bak
