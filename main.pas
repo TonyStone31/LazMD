@@ -279,7 +279,7 @@ begin
   // Save As watches the new name; our own write is not news
   Eye.Path := FFile;
   Eye.Enabled := True;
-  Eye.Wrote(FFile);
+  Eye.MarkOwnWrite(FFile);
   FDirty := False;
   FGone := False;
   ShowTitle;
