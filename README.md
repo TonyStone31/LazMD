@@ -2,35 +2,33 @@
 
 ### A small Markdown viewer and editor, for Linux, Windows and macOS.
 
-Double-click a `.md` file and read it the way it was written to be read —
-headings, tables, images, code — instead of a wall of asterisks in a text
-editor. One document, one window, three ways to look at it:
+It shows a
+`.md` file rendered, with headings, tables, images and code, instead of as
+plain text. One document per window, in three modes:
 
 - **View** — the rendered page. Links work: web links open in the browser,
   links to other Markdown files open in LazMD.
 - **Edit** — type into the rendered page itself. Ctrl+B/I/U, and toolbar
   buttons for headings, lists, quotes, code and tables.
-- **Raw** — the Markdown source, lightly colored.
+- **Raw** — the Markdown source, with syntax coloring.
 
 ![LazMD showing its own README on Linux](images/lazmd-linux.png)
 
 ![The same on macOS](images/lazmd-macos.png)
 
-The raw source is the document: the file on disk is only ever written from
-it, so opening a file and just reading it never reformats a byte. Edits made
-in the rendered view are folded back into the source when you switch away
-or save.
+The file is always saved from the Markdown source, so a file that is only
+opened and read is never reformatted. Edits made in Edit mode are written
+back into the source when you switch modes or save.
 
-When another program changes the open file, LazMD loads the new version
-and says so. If there are edits here that would be lost, a bar across the
-page asks first, without a dialog in the way.
+When another program changes the open file, LazMD reloads it and shows a
+short notice. If there are unsaved edits, a bar above the text asks whether
+to reload or keep them; nothing modal opens.
 
-Built with [LazInk](https://github.com/TonyStone31/LazInk), which draws the
-formatted text, [FileAss](https://github.com/TonyStone31/FileAss), which
-registers the file association, and
-[FileEye](https://github.com/TonyStone31/FileEye), which notices the file
-changing, and [InfoBarToast](https://github.com/TonyStone31/InfoBarToast),
-which says so.
+Built with [LazInk](https://github.com/TonyStone31/LazInk) (rendering),
+[FileAss](https://github.com/TonyStone31/FileAss) (file association),
+[FileEye](https://github.com/TonyStone31/FileEye) (file change events) and
+[InfoBarToast](https://github.com/TonyStone31/InfoBarToast) (the bar and
+the notices).
 
 ## Install
 
@@ -42,8 +40,8 @@ No installer, no dependencies to fetch.
   GTK3, which every current desktop has.
 - **Windows** — `lazmd-windows-x86_64.zip`. Unzip and run `lazmd.exe`.
 - **macOS** — `lazmd-macos.zip`. Unzip, drag `LazMD.app` to Applications.
-  The first time, right-click it and choose Open: it is not signed with
-  Apple, so Gatekeeper wants to be told once.
+  It is not signed, so the first time, right-click it and choose Open to
+  get past Gatekeeper.
 
 ## Use it for Markdown files
 
