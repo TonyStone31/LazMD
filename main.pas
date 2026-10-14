@@ -34,6 +34,32 @@ uses
 type
   TLazMDMode = (lmView, lmEdit, lmRaw);
 
+  TTablePickEvent = procedure(ACols, ARows: integer) of object;
+
+  { The table-size picker: a little grid under the Table button. Moving
+    the mouse stretches the blue area - and the grid itself grows as the
+    pointer nears its edge - and the click on the bottom-right cell is
+    the size. Borderless, closes on Escape or on losing focus. }
+  TfrmTablePick = class(TForm)
+  private
+    FCols, FRows: integer;    // the hovered size, 0 before the mouse arrives
+    FGridC, FGridR: integer;  // how many cells are shown
+    FOnPick: TTablePickEvent;
+    procedure FitToGrid;
+  protected
+    procedure Paint; override;
+    procedure MouseMove(Shift: TShiftState; X, Y: integer); override;
+    procedure MouseUp(Button: TMouseButton; Shift: TShiftState; X, Y: integer); override;
+    procedure KeyDown(var Key: word; Shift: TShiftState); override;
+    procedure Deactivate; override;
+    procedure DoClose(var CloseAction: TCloseAction); override;
+  public
+    constructor CreateNew(AOwner: TComponent; Num: integer = 0); override;
+    procedure SetHover(ACols, ARows: integer);
+    procedure PickNow;
+    property OnPick: TTablePickEvent read FOnPick write FOnPick;
+  end;
+
   { TfrmMain }
 
   TfrmMain = class(TForm)
@@ -87,6 +113,7 @@ type
     FMdColor: array of TColor;
     FMdStyle: array of TFontStyles;
     procedure SetMode(AMode: TLazMDMode);
+    procedure TableSizePicked(ACols, ARows: integer);
     procedure PullFromEditor;
     procedure RenderView;
     procedure MdRecolor;
@@ -111,7 +138,7 @@ implementation
 {$R *.lfm}
 
 uses
-  LazFileUtils, URIParser, Process, InkDraw;
+  Math, LazFileUtils, URIParser, Process, InkDraw;
 
   { ------------------------------------------------------------------ startup }
 
@@ -288,6 +315,7 @@ begin
         reDoc.Modified := False;
         FEditFresh := True;
       end;
+    lmRaw: ;  // the source memo is always current
   end;
   pageView.Visible := AMode = lmView;
   reDoc.Visible := AMode = lmEdit;
@@ -365,8 +393,21 @@ begin
 end;
 
 procedure TfrmMain.btnTableClick(Sender: TObject);
+var
+  Pick: TfrmTablePick;
+  P: TPoint;
 begin
-  reDoc.InsertTable(3, 2);
+  Pick := TfrmTablePick.CreateNew(Self);
+  Pick.OnPick := @TableSizePicked;
+  P := btnTable.ClientToScreen(Point(0, btnTable.Height));
+  Pick.Left := P.X;
+  Pick.Top := P.Y;
+  Pick.Show;
+end;
+
+procedure TfrmMain.TableSizePicked(ACols, ARows: integer);
+begin
+  reDoc.InsertTable(ACols, ARows);
   reDoc.SetFocus;
 end;
 
@@ -610,6 +651,131 @@ begin
     if FMdColor[AIndex - 1] <> clDefault then AColor := FMdColor[AIndex - 1];
     AStyle := AStyle + FMdStyle[AIndex - 1];
   end;
+end;
+
+{ ---------------------------------------------------- the table-size picker }
+
+const
+  PK_CELL = 22;   // one cell's pitch; the box inside is PK_CELL - 4
+  PK_MARG = 8;
+  PK_LABELH = 22;
+  PK_MINC = 5;
+  PK_MINR = 4;
+  PK_MAXC = 12;
+  PK_MAXR = 10;
+
+constructor TfrmTablePick.CreateNew(AOwner: TComponent; Num: integer);
+begin
+  inherited CreateNew(AOwner, Num);
+  BorderStyle := bsNone;
+  ShowInTaskBar := stNever;
+  PopupMode := pmAuto;
+  Color := clWindow;
+  FCols := 0;
+  FRows := 0;
+  FGridC := PK_MINC;
+  FGridR := PK_MINR;
+  FitToGrid;
+end;
+
+procedure TfrmTablePick.FitToGrid;
+begin
+  SetBounds(Left, Top, PK_MARG * 2 + FGridC * PK_CELL,
+    PK_MARG * 2 + FGridR * PK_CELL + PK_LABELH);
+end;
+
+procedure TfrmTablePick.Paint;
+var
+  C, R, X, Y: integer;
+  Hot: boolean;
+  S: string;
+begin
+  Canvas.Brush.Color := clWindow;
+  Canvas.FillRect(ClientRect);
+  for R := 0 to FGridR - 1 do
+    for C := 0 to FGridC - 1 do
+    begin
+      X := PK_MARG + C * PK_CELL;
+      Y := PK_MARG + R * PK_CELL;
+      Hot := (C < FCols) and (R < FRows);
+      if Hot then
+      begin
+        Canvas.Brush.Color := $00FEEADB;  // a light blue wash (BGR)
+        Canvas.Pen.Color := $00F48542;    // and its stronger edge
+      end
+      else
+      begin
+        Canvas.Brush.Color := clWhite;
+        Canvas.Pen.Color := $00C8C8C8;
+      end;
+      Canvas.Rectangle(X, Y, X + PK_CELL - 4, Y + PK_CELL - 4);
+    end;
+  if FCols > 0 then
+    S := Format('%d ' + #$C3#$97 + ' %d', [FCols, FRows])
+  else
+    S := 'Table size';
+  Canvas.Brush.Style := bsClear;
+  Canvas.Font.Color := clWindowText;
+  Canvas.TextOut(PK_MARG, PK_MARG + FGridR * PK_CELL + 2, S);
+  Canvas.Brush.Style := bsSolid;
+  { the popup's own outline, since there is no window border }
+  Canvas.Brush.Style := bsClear;
+  Canvas.Pen.Color := $00A0A0A0;
+  Canvas.Rectangle(0, 0, ClientWidth, ClientHeight);
+  Canvas.Brush.Style := bsSolid;
+end;
+
+procedure TfrmTablePick.SetHover(ACols, ARows: integer);
+begin
+  FCols := Max(1, Min(PK_MAXC, ACols));
+  FRows := Max(1, Min(PK_MAXR, ARows));
+  { the grid keeps one spare row and column in reach, so dragging toward
+    the corner keeps growing it }
+  FGridC := Max(PK_MINC, Min(PK_MAXC, FCols + 1));
+  FGridR := Max(PK_MINR, Min(PK_MAXR, FRows + 1));
+  FitToGrid;
+  Invalidate;
+end;
+
+procedure TfrmTablePick.MouseMove(Shift: TShiftState; X, Y: integer);
+begin
+  inherited MouseMove(Shift, X, Y);
+  SetHover((X - PK_MARG) div PK_CELL + 1, (Y - PK_MARG) div PK_CELL + 1);
+end;
+
+procedure TfrmTablePick.PickNow;
+begin
+  if (FCols > 0) and Assigned(FOnPick) then FOnPick(FCols, FRows);
+  Close;
+end;
+
+procedure TfrmTablePick.MouseUp(Button: TMouseButton; Shift: TShiftState; X, Y: integer);
+begin
+  inherited MouseUp(Button, Shift, X, Y);
+  if Button = mbLeft then PickNow;
+end;
+
+procedure TfrmTablePick.KeyDown(var Key: word; Shift: TShiftState);
+begin
+  if Key = VK_ESCAPE then
+  begin
+    Key := 0;
+    Close;
+  end
+  else
+    inherited KeyDown(Key, Shift);
+end;
+
+procedure TfrmTablePick.Deactivate;
+begin
+  inherited Deactivate;
+  Close;
+end;
+
+procedure TfrmTablePick.DoClose(var CloseAction: TCloseAction);
+begin
+  inherited DoClose(CloseAction);
+  CloseAction := caFree;
 end;
 
 initialization

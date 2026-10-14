@@ -1,7 +1,7 @@
 object frmMain: TfrmMain
-  Left = 300
+  Left = 10
   Height = 720
-  Top = 140
+  Top = 10
   Width = 920
   AllowDropFiles = True
   Caption = 'LazMD'
@@ -173,7 +173,7 @@ object frmMain: TfrmMain
     object btnTable: TSpeedButton
       Left = 504
       Height = 28
-      Hint = 'Insert a 3'#215'2 table - Tab hops cells, Enter adds a row'
+      Hint = 'Insert a table - drag out the size, click to place it'
       Top = 5
       Width = 48
       Caption = 'Table'
