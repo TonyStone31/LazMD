@@ -105,7 +105,7 @@ type
     procedure btnTableClick(Sender: TObject);
     procedure MdCharAttrs(Sender: TObject; AIndex: integer; const AChar: string; var AColor: TColor; var AStyle: TFontStyles);
     procedure EyeChange(Sender: TObject; const FileName: string; Change: TFileEyeChange);
-    procedure BarAnswer(Sender: TObject; Answer: TModalResult);
+    procedure BarAnswer(Sender: TObject; const Key: string; Answer: TModalResult);
   private
     FFile: string;
     FMode: TLazMDMode;
@@ -232,7 +232,7 @@ begin
     except
       on E: Exception do
       begin
-        Bar.Show('Could not open ' + AFileName + ': ' + E.Message, mtError, []);
+        Bar.Show('Could not open ' + AFileName + ': ' + E.Message, mtError, [], 'open');
         Exit;
       end;
     end;
@@ -451,15 +451,16 @@ begin
   begin
     FGone := True;
     ShowTitle;
-    Bar.ShowQuestion(DisplayName + ' was deleted on disk.', mtWarning, [mrYes, '&Save it again']);
+    Bar.Hide('changed');
+    Bar.ShowQuestion(DisplayName + ' was deleted on disk.', mtWarning, [mrYes, '&Save it again'], 'deleted');
     Exit;
   end;
   // the file is back: drop the deleted-file question
-  if FGone then Bar.Hide;
+  if FGone then Bar.Hide('deleted');
   FGone := False;
   PullFromEditor;
   if FDirty then
-    Bar.ShowQuestion(DisplayName + ' was changed by another program.', mtWarning, [mrYes, '&Reload', mrNo, '&Keep mine'])
+    Bar.ShowQuestion(DisplayName + ' was changed by another program.', mtWarning, [mrYes, '&Reload', mrNo, '&Keep mine'], 'changed')
   else
   begin
     ReloadFile;
@@ -467,14 +468,13 @@ begin
   end;
 end;
 
-{ mrYes is Reload, or Save it again when the file is gone. Any other
-  answer keeps the text here; the next save overwrites the file. }
-procedure TfrmMain.BarAnswer(Sender: TObject; Answer: TModalResult);
+{ Reload, or Save it again for a file that is gone. Any other answer keeps
+  the text here; the next save overwrites the file. }
+procedure TfrmMain.BarAnswer(Sender: TObject; const Key: string; Answer: TModalResult);
 begin
   if Answer <> mrYes then Exit;
-  if FGone then SaveFile
-  else
-    ReloadFile;
+  if Key = 'deleted' then SaveFile
+  else if Key = 'changed' then ReloadFile;
 end;
 
 procedure TfrmMain.DocSelectionChange(Sender: TObject);
