@@ -29,7 +29,7 @@ uses
   Classes, SysUtils, Forms, Controls, Graphics, Dialogs, Menus, Buttons,
   ExtCtrls, StdCtrls, LCLIntf, LCLType, LazUTF8,
   InkPage, InkRichEdit, InkCodeMemo, InkLabel,
-  FileAssMan, FATypes, FileEye;
+  FileAssMan, FATypes, FileEye, InfoBar, Toast;
 
 type
   TLazMDMode = (lmView, lmEdit, lmRaw);
@@ -83,6 +83,8 @@ type
     dlgSave: TSaveDialog;
     FileAss: TFileAssMan;
     Eye: TFileEye;
+    Bar: TInfoBar;
+    Toast: TToast;
 
     procedure FormCreate(Sender: TObject);
     procedure FormCloseQuery(Sender: TObject; var CanClose: boolean);
@@ -103,6 +105,7 @@ type
     procedure btnTableClick(Sender: TObject);
     procedure MdCharAttrs(Sender: TObject; AIndex: integer; const AChar: string; var AColor: TColor; var AStyle: TFontStyles);
     procedure EyeChange(Sender: TObject; const FileName: string; Change: TFileEyeChange);
+    procedure BarAnswer(Sender: TObject; Answer: TModalResult);
   private
     FFile: string;
     FMode: TLazMDMode;
@@ -126,6 +129,7 @@ type
     procedure UpdateKindButtons;
     function BaseURI: string;
     function DisplayName: string;
+    function Content: TControl;
     function ConfirmClose: boolean;
     function SaveFile: boolean;
     function SaveFileAs: boolean;
@@ -180,6 +184,17 @@ begin
     Result := ExtractFileName(FFile);
 end;
 
+{ the visible view; the bar is pinned to it }
+function TfrmMain.Content: TControl;
+begin
+  case FMode of
+    lmEdit: Result := reDoc;
+    lmRaw: Result := memRaw;
+    else
+      Result := pageView;
+  end;
+end;
+
 function TfrmMain.BaseURI: string;
 begin
   { relative images and links are found beside the file }
@@ -217,13 +232,14 @@ begin
     except
       on E: Exception do
       begin
-        MessageDlg('LazMD', 'Could not open ' + AFileName + LineEnding + E.Message, mtError, [mbOK], 0);
+        Bar.Show('Could not open ' + AFileName + ': ' + E.Message, mtError, []);
         Exit;
       end;
     end;
   finally
     FSyncing := False;
   end;
+  Bar.Hide;
   FFile := AFileName;
   FDirty := False;
   FGone := False;
@@ -253,6 +269,7 @@ begin
   finally
     FSyncing := False;
   end;
+  Bar.Hide;
   FDirty := False;
   FGone := False;
   FViewFresh := False;
@@ -280,9 +297,12 @@ begin
   Eye.Path := FFile;
   Eye.Enabled := True;
   Eye.MarkOwnWrite(FFile);
+  // a save settles whatever the bar asked
+  Bar.Hide;
   FDirty := False;
   FGone := False;
   ShowTitle;
+  Toast.Show('Saved.');
   Result := True;
 end;
 
@@ -375,6 +395,7 @@ begin
   pageView.Visible := AMode = lmView;
   reDoc.Visible := AMode = lmEdit;
   memRaw.Visible := AMode = lmRaw;
+  Bar.Control := Content;
   sbView.Down := AMode = lmView;
   sbEdit.Down := AMode = lmEdit;
   sbRaw.Down := AMode = lmRaw;
@@ -423,31 +444,37 @@ begin
 end;
 
 { Another program changed the file. Untouched here, it simply reloads;
-  with edits of ours at stake, ask first. }
+  with edits of ours at stake, the bar asks. }
 procedure TfrmMain.EyeChange(Sender: TObject; const FileName: string; Change: TFileEyeChange);
-var
-  Take: boolean;
 begin
   if Change = fcDeleted then
   begin
     FGone := True;
     ShowTitle;
+    Bar.ShowQuestion(DisplayName + ' was deleted on disk.', mtWarning, [mrYes, '&Save it again']);
     Exit;
   end;
+  // the file is back: drop the deleted-file question
+  if FGone then Bar.Hide;
   FGone := False;
   PullFromEditor;
-  Take := not FDirty;
-  if not Take then
-  begin
-    // quiet while asking, or every save over there asks again
-    Eye.Enabled := False;
-    Take := MessageDlg('LazMD', DisplayName + ' was changed by another program.' + LineEnding + 'Load it and lose the changes made here?',
-      mtWarning, [mbYes, mbNo], 0) = mrYes;
-    Eye.Enabled := True;
-  end;
-  if Take then ReloadFile
+  if FDirty then
+    Bar.ShowQuestion(DisplayName + ' was changed by another program.', mtWarning, [mrYes, '&Reload', mrNo, '&Keep mine'])
   else
-    ShowTitle;
+  begin
+    ReloadFile;
+    Toast.Show('Reloaded: another program changed ' + DisplayName + '.');
+  end;
+end;
+
+{ mrYes is Reload, or Save it again when the file is gone. Any other
+  answer keeps the text here; the next save overwrites the file. }
+procedure TfrmMain.BarAnswer(Sender: TObject; Answer: TModalResult);
+begin
+  if Answer <> mrYes then Exit;
+  if FGone then SaveFile
+  else
+    ReloadFile;
 end;
 
 procedure TfrmMain.DocSelectionChange(Sender: TObject);
@@ -546,6 +573,7 @@ begin
     FSyncing := False;
   end;
   Eye.Enabled := False;
+  Bar.Hide;
   FFile := '';
   FDirty := False;
   FGone := False;

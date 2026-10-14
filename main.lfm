@@ -335,4 +335,13 @@ object frmMain: TfrmMain
     Left = 680
     Top = 320
   end
+  object Bar: TInfoBar
+    OnAnswer = BarAnswer
+    Left = 680
+    Top = 380
+  end
+  object Toast: TToast
+    Left = 680
+    Top = 440
+  end
 end

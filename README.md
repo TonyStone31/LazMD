@@ -21,14 +21,16 @@ it, so opening a file and just reading it never reformats a byte. Edits made
 in the rendered view are folded back into the source when you switch away
 or save.
 
-When another program changes the open file, LazMD loads the new version.
-If there are edits here that would be lost, it asks first.
+When another program changes the open file, LazMD loads the new version
+and says so. If there are edits here that would be lost, a bar across the
+page asks first, without a dialog in the way.
 
 Built with [LazInk](https://github.com/TonyStone31/LazInk), which draws the
 formatted text, [FileAss](https://github.com/TonyStone31/FileAss), which
 registers the file association, and
 [FileEye](https://github.com/TonyStone31/FileEye), which notices the file
-changing.
+changing, and [InfoBarToast](https://github.com/TonyStone31/InfoBarToast),
+which says so.
 
 ## Install
 
@@ -59,9 +61,10 @@ Command line: `lazmd FILE` opens a file; each launch is its own window.
 ## Build
 
 Free Pascal and Lazarus, with the [LazInk](https://github.com/TonyStone31/LazInk),
-[FileAss](https://github.com/TonyStone31/FileAss) and
-[FileEye](https://github.com/TonyStone31/FileEye) repositories checked out
-beside this one:
+[FileAss](https://github.com/TonyStone31/FileAss),
+[FileEye](https://github.com/TonyStone31/FileEye) and
+[InfoBarToast](https://github.com/TonyStone31/InfoBarToast) repositories
+checked out beside this one:
 
 ```sh
 ./build.sh            # Linux, zipped into dist/

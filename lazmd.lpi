@@ -40,6 +40,10 @@
         <DefaultFilename Value="../FileEye/fileeyepkg.lpk" Prefer="True"/>
       </Item>
       <Item>
+        <PackageName Value="InfoBarToast"/>
+        <DefaultFilename Value="../InfoBarToast/infobartoast.lpk" Prefer="True"/>
+      </Item>
+      <Item>
         <PackageName Value="LCL"/>
       </Item>
     </RequiredPackages>
