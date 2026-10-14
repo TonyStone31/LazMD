@@ -5,8 +5,8 @@
 #   ./build-macos.sh app    Release, then into dist/: LazMD.app and its zip
 #
 # Lazarus is looked for in ~/Developer/lazarus; set LAZARUS_DIR for another.
-# The project file points at LazInk and FileAss checked out beside this
-# directory.
+# The project file points at LazInk, FileAss and FileEye checked out beside
+# this directory.
 set -euo pipefail
 cd "$(dirname "$0")"
 LAZARUS_DIR=${LAZARUS_DIR:-$HOME/Developer/lazarus}

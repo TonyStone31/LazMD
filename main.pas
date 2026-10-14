@@ -29,7 +29,7 @@ uses
   Classes, SysUtils, Forms, Controls, Graphics, Dialogs, Menus, Buttons,
   ExtCtrls, StdCtrls, LCLIntf, LCLType, LazUTF8,
   InkPage, InkRichEdit, InkCodeMemo, InkLabel,
-  FileAssMan, FATypes;
+  FileAssMan, FATypes, FileEye;
 
 type
   TLazMDMode = (lmView, lmEdit, lmRaw);
@@ -82,6 +82,7 @@ type
     dlgOpen: TOpenDialog;
     dlgSave: TSaveDialog;
     FileAss: TFileAssMan;
+    Eye: TFileEye;
 
     procedure FormCreate(Sender: TObject);
     procedure FormCloseQuery(Sender: TObject; var CanClose: boolean);
@@ -101,10 +102,12 @@ type
     procedure btnKindClick(Sender: TObject);
     procedure btnTableClick(Sender: TObject);
     procedure MdCharAttrs(Sender: TObject; AIndex: integer; const AChar: string; var AColor: TColor; var AStyle: TFontStyles);
+    procedure EyeChange(Sender: TObject; const FileName: string; Change: TFileEyeChange);
   private
     FFile: string;
     FMode: TLazMDMode;
     FDirty: boolean;      // the document differs from the file on disk
+    FGone: boolean;       // the file was deleted under us
     FSyncing: boolean;    // a change of our own making, not the user's
     FViewFresh: boolean;  // pageView shows the current source
     FEditFresh: boolean;  // reDoc holds the current source
@@ -113,6 +116,8 @@ type
     FMdColor: array of TColor;
     FMdStyle: array of TFontStyles;
     procedure SetMode(AMode: TLazMDMode);
+    procedure Freshen;
+    procedure ReloadFile;
     procedure TableSizePicked(ACols, ARows: integer);
     procedure PullFromEditor;
     procedure RenderView;
@@ -184,11 +189,17 @@ begin
 end;
 
 procedure TfrmMain.ShowTitle;
+var
+  Note: string;
 begin
-  if FDirty then
+  if FGone then Note := 'deleted on disk'
+  else if FDirty then Note := 'changed'
+  else
+    Note := '';
+  if Note <> '' then
   begin
-    Caption := DisplayName + ' (changed) - LazMD';
-    lblFile.Caption := '<b>' + HTMLEscape(DisplayName) + '</b> <font color="#C0392B">(changed)</font>';
+    Caption := DisplayName + ' (' + Note + ') - LazMD';
+    lblFile.Caption := '<b>' + HTMLEscape(DisplayName) + '</b> <font color="#C0392B">(' + Note + ')</font>';
   end
   else
   begin
@@ -215,12 +226,40 @@ begin
   end;
   FFile := AFileName;
   FDirty := False;
+  FGone := False;
   FViewFresh := False;
   FEditFresh := False;
   reDoc.Modified := False;
   MdRecolor;
   SetMode(lmView);
   pageView.ScrollTo(0);
+  ShowTitle;
+  Eye.Path := FFile;
+  Eye.Enabled := True;
+end;
+
+{ Another program changed the file and there are no edits here to lose:
+  take theirs, staying in the same mode. }
+procedure TfrmMain.ReloadFile;
+begin
+  FSyncing := True;
+  try
+    try
+      memRaw.Lines.LoadFromFile(FFile);
+    except
+      // still being written; the next change brings the rest
+      Exit;
+    end;
+  finally
+    FSyncing := False;
+  end;
+  FDirty := False;
+  FGone := False;
+  FViewFresh := False;
+  FEditFresh := False;
+  reDoc.Modified := False;
+  MdRecolor;
+  Freshen;
   ShowTitle;
 end;
 
@@ -237,7 +276,12 @@ begin
       Exit(False);
     end;
   end;
+  // Save As watches the new name; our own write is not news
+  Eye.Path := FFile;
+  Eye.Enabled := True;
+  Eye.Wrote(FFile);
   FDirty := False;
+  FGone := False;
   ShowTitle;
   Result := True;
 end;
@@ -253,10 +297,15 @@ begin
 end;
 
 function TfrmMain.ConfirmClose: boolean;
+var
+  Question: string;
 begin
   PullFromEditor;
-  if not FDirty then Exit(True);
-  case MessageDlg('LazMD', 'Save changes to ' + DisplayName + '?', mtConfirmation, [mbYes, mbNo, mbCancel], 0) of
+  if not FDirty and not FGone then Exit(True);
+  if FDirty then Question := 'Save changes to ' + DisplayName + '?'
+  else
+    Question := DisplayName + ' was deleted on disk. Save it again?';
+  case MessageDlg('LazMD', Question, mtConfirmation, [mbYes, mbNo, mbCancel], 0) of
     mrYes: Result := SaveFile;
     mrNo: Result := True;
     else
@@ -296,11 +345,10 @@ begin
   FViewFresh := True;
 end;
 
-procedure TfrmMain.SetMode(AMode: TLazMDMode);
+{ Brings the view on show up to date with the source. }
+procedure TfrmMain.Freshen;
 begin
-  PullFromEditor;
-  FMode := AMode;
-  case AMode of
+  case FMode of
     lmView:
       if not FViewFresh then RenderView;
     lmEdit:
@@ -317,6 +365,13 @@ begin
       end;
     lmRaw: ;  // the source memo is always current
   end;
+end;
+
+procedure TfrmMain.SetMode(AMode: TLazMDMode);
+begin
+  PullFromEditor;
+  FMode := AMode;
+  Freshen;
   pageView.Visible := AMode = lmView;
   reDoc.Visible := AMode = lmEdit;
   memRaw.Visible := AMode = lmRaw;
@@ -365,6 +420,34 @@ begin
   FViewFresh := False;
   ShowTitle;
   UpdateKindButtons;
+end;
+
+{ Another program changed the file. Untouched here, it simply reloads;
+  with edits of ours at stake, ask first. }
+procedure TfrmMain.EyeChange(Sender: TObject; const FileName: string; Change: TFileEyeChange);
+var
+  Take: boolean;
+begin
+  if Change = fcDeleted then
+  begin
+    FGone := True;
+    ShowTitle;
+    Exit;
+  end;
+  FGone := False;
+  PullFromEditor;
+  Take := not FDirty;
+  if not Take then
+  begin
+    // quiet while asking, or every save over there asks again
+    Eye.Enabled := False;
+    Take := MessageDlg('LazMD', DisplayName + ' was changed by another program.' + LineEnding + 'Load it and lose the changes made here?',
+      mtWarning, [mbYes, mbNo], 0) = mrYes;
+    Eye.Enabled := True;
+  end;
+  if Take then ReloadFile
+  else
+    ShowTitle;
 end;
 
 procedure TfrmMain.DocSelectionChange(Sender: TObject);
@@ -462,8 +545,10 @@ begin
   finally
     FSyncing := False;
   end;
+  Eye.Enabled := False;
   FFile := '';
   FDirty := False;
+  FGone := False;
   FViewFresh := False;
   FEditFresh := False;
   reDoc.Modified := False;

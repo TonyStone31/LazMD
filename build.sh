@@ -7,8 +7,8 @@
 #
 # lazbuild comes from PATH, or set LAZBUILD (options allowed, for example
 # LAZBUILD="$HOME/lazarus/lazbuild --pcp=$HOME/.lazarus").  The project
-# file points at LazInk and FileAss checked out beside this directory.  The
-# Mac is build-macos.sh.
+# file points at LazInk, FileAss and FileEye checked out beside this
+# directory.  The Mac is build-macos.sh.
 set -euo pipefail
 cd "$(dirname "$0")"
 LAZBUILD=${LAZBUILD:-lazbuild}

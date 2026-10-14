@@ -36,6 +36,10 @@
         <DefaultFilename Value="../FileAss/component/fileass_runtime.lpk" Prefer="True"/>
       </Item>
       <Item>
+        <PackageName Value="FileEyePkg"/>
+        <DefaultFilename Value="../FileEye/fileeyepkg.lpk" Prefer="True"/>
+      </Item>
+      <Item>
         <PackageName Value="LCL"/>
       </Item>
     </RequiredPackages>

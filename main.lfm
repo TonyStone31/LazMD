@@ -330,4 +330,9 @@ object frmMain: TfrmMain
     Left = 680
     Top = 260
   end
+  object Eye: TFileEye
+    OnChange = EyeChange
+    Left = 680
+    Top = 320
+  end
 end
