@@ -14,6 +14,8 @@ editor. One document, one window, three ways to look at it:
 
 ![LazMD showing its own README on Linux](images/lazmd-linux.png)
 
+![The same on macOS](images/lazmd-macos.png)
+
 The raw source is the document: the file on disk is only ever written from
 it, so opening a file and just reading it never reformats a byte. Edits made
 in the rendered view are folded back into the source when you switch away
@@ -67,7 +69,9 @@ Windows is cross-built; the source builds on either.
 
 ## Tested on
 
-Linux Mint with GTK3, and Windows 10 in a virtual machine.
+Linux Mint with GTK3; Windows 10, in a virtual machine; macOS Sequoia 15 on
+Intel, in a virtual machine, where a Markdown file handed to the bundle by
+Finder opens in it. Apple Silicon has not been tried.
 
 ## License
 
