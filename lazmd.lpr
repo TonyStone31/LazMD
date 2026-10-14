@@ -11,6 +11,8 @@ uses
   SysUtils,
   Main;
 
+{$R *.res}
+
 begin
   RequireDerivedFormResource := True;
   Application.Scaled := True;

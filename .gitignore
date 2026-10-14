@@ -1,5 +1,8 @@
 lazmd
+lazmd.exe
 lazmd.lps
+lazmd.res
 lib/
+dist/
 backup/
 *.bak

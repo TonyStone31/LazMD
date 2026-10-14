@@ -8,6 +8,12 @@
       </Flags>
       <SessionStorage Value="InProjectDir"/>
       <Title Value="LazMD"/>
+      <ResourceType Value="res"/>
+      <UseXPManifest Value="True"/>
+      <XPManifest>
+        <DpiAware Value="True"/>
+      </XPManifest>
+      <Icon Value="0"/>
       <UseAppBundle Value="False"/>
     </General>
     <BuildModes>
