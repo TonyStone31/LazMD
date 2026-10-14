@@ -39,16 +39,14 @@ type
   TfrmMain = class(TForm)
     mnuMain: TMainMenu;
     mnuFile: TMenuItem;
-    miNew, miOpen, miSave, miSaveAs, miSep1, miRegister, miUnregister,
-      miSep2, miQuit: TMenuItem;
+    miNew, miOpen, miSave, miSaveAs, miSep1, miRegister, miUnregister, miSep2, miQuit: TMenuItem;
     mnuView: TMenuItem;
     miModeView, miModeEdit, miModeRaw: TMenuItem;
 
     pnlTools: TPanel;
     btnOpen, btnSave: TButton;
     sbView, sbEdit, sbRaw: TSpeedButton;
-    btnKindH1, btnKindH2, btnKindBullet, btnKindNumber, btnKindQuote,
-      btnKindCode, btnTable: TSpeedButton;
+    btnKindH1, btnKindH2, btnKindBullet, btnKindNumber, btnKindQuote, btnKindCode, btnTable: TSpeedButton;
     lblFile: TInkLabel;
 
     pageView: TInkPage;
@@ -60,7 +58,7 @@ type
     FileAss: TFileAssMan;
 
     procedure FormCreate(Sender: TObject);
-    procedure FormCloseQuery(Sender: TObject; var CanClose: Boolean);
+    procedure FormCloseQuery(Sender: TObject; var CanClose: boolean);
     procedure FormDropFiles(Sender: TObject; const FileNames: array of string);
     procedure FileNewClick(Sender: TObject);
     procedure FileOpenClick(Sender: TObject);
@@ -76,15 +74,14 @@ type
     procedure DocSelectionChange(Sender: TObject);
     procedure btnKindClick(Sender: TObject);
     procedure btnTableClick(Sender: TObject);
-    procedure MdCharAttrs(Sender: TObject; AIndex: Integer;
-      const AChar: string; var AColor: TColor; var AStyle: TFontStyles);
+    procedure MdCharAttrs(Sender: TObject; AIndex: integer; const AChar: string; var AColor: TColor; var AStyle: TFontStyles);
   private
     FFile: string;
     FMode: TLazMDMode;
-    FDirty: Boolean;      // the document differs from the file on disk
-    FSyncing: Boolean;    // a change of our own making, not the user's
-    FViewFresh: Boolean;  // pageView shows the current source
-    FEditFresh: Boolean;  // reDoc holds the current source
+    FDirty: boolean;      // the document differs from the file on disk
+    FSyncing: boolean;    // a change of our own making, not the user's
+    FViewFresh: boolean;  // pageView shows the current source
+    FEditFresh: boolean;  // reDoc holds the current source
     { the raw view's colors: whole lines classified once per change,
       the per-character event only reads the map }
     FMdColor: array of TColor;
@@ -97,13 +94,13 @@ type
     procedure UpdateKindButtons;
     function BaseURI: string;
     function DisplayName: string;
-    function ConfirmClose: Boolean;
-    function SaveFile: Boolean;
-    function SaveFileAs: Boolean;
+    function ConfirmClose: boolean;
+    function SaveFile: boolean;
+    function SaveFileAs: boolean;
   public
     procedure LoadFile(const AFileName: string);
     { used by the --register / --unregister command line too }
-    function RegisterWithSystem(AInstall: Boolean): string;
+    function RegisterWithSystem(AInstall: boolean): string;
   end;
 
 var
@@ -116,7 +113,7 @@ implementation
 uses
   LazFileUtils, URIParser, Process, InkDraw;
 
-{ ------------------------------------------------------------------ startup }
+  { ------------------------------------------------------------------ startup }
 
 procedure TfrmMain.FormCreate(Sender: TObject);
 begin
@@ -126,22 +123,17 @@ begin
   UpdateKindButtons;
   { an empty start still greets; the greeting is view-only and vanishes
     the moment anything real is loaded or typed }
-  pageView.LoadMarkdown('# LazMD' + LineEnding + LineEnding +
-    'A Markdown file, shown the way it was written to be read.' +
-    LineEnding + LineEnding +
-    '- **Open** a file (Ctrl+O) or drop one on the window' + LineEnding +
-    '- **View** is the rendered page; links work' + LineEnding +
-    '- **Edit** types into the rendered page itself' + LineEnding +
-    '- **Raw** is the source' + LineEnding, '');
+  pageView.LoadMarkdown('# LazMD' + LineEnding + LineEnding + 'A Markdown file, shown the way it was written to be read.' + LineEnding +
+    LineEnding + '- **Open** a file (Ctrl+O) or drop one on the window' + LineEnding + '- **View** is the rendered page; links work' +
+    LineEnding + '- **Edit** types into the rendered page itself' + LineEnding + '- **Raw** is the source' + LineEnding, '');
 end;
 
-procedure TfrmMain.FormCloseQuery(Sender: TObject; var CanClose: Boolean);
+procedure TfrmMain.FormCloseQuery(Sender: TObject; var CanClose: boolean);
 begin
   CanClose := ConfirmClose;
 end;
 
-procedure TfrmMain.FormDropFiles(Sender: TObject;
-  const FileNames: array of string);
+procedure TfrmMain.FormDropFiles(Sender: TObject; const FileNames: array of string);
 begin
   if Length(FileNames) = 0 then Exit;
   if ConfirmClose then LoadFile(FileNames[0]);
@@ -151,13 +143,17 @@ end;
 
 function TfrmMain.DisplayName: string;
 begin
-  if FFile = '' then Result := 'untitled' else Result := ExtractFileName(FFile);
+  if FFile = '' then Result := 'untitled'
+  else
+    Result := ExtractFileName(FFile);
 end;
 
 function TfrmMain.BaseURI: string;
 begin
   { relative images and links are found beside the file }
-  if FFile <> '' then Result := FilenameToURI(FFile) else Result := '';
+  if FFile <> '' then Result := FilenameToURI(FFile)
+  else
+    Result := '';
 end;
 
 procedure TfrmMain.ShowTitle;
@@ -165,8 +161,7 @@ begin
   if FDirty then
   begin
     Caption := DisplayName + ' (changed) - LazMD';
-    lblFile.Caption := '<b>' + HTMLEscape(DisplayName) +
-      '</b> <font color="#C0392B">(changed)</font>';
+    lblFile.Caption := '<b>' + HTMLEscape(DisplayName) + '</b> <font color="#C0392B">(changed)</font>';
   end
   else
   begin
@@ -184,8 +179,7 @@ begin
     except
       on E: Exception do
       begin
-        MessageDlg('LazMD', 'Could not open ' + AFileName + LineEnding +
-          E.Message, mtError, [mbOK], 0);
+        MessageDlg('LazMD', 'Could not open ' + AFileName + LineEnding + E.Message, mtError, [mbOK], 0);
         Exit;
       end;
     end;
@@ -203,7 +197,7 @@ begin
   ShowTitle;
 end;
 
-function TfrmMain.SaveFile: Boolean;
+function TfrmMain.SaveFile: boolean;
 begin
   PullFromEditor;
   if FFile = '' then Exit(SaveFileAs);
@@ -212,8 +206,7 @@ begin
   except
     on E: Exception do
     begin
-      MessageDlg('LazMD', 'Could not save ' + FFile + LineEnding +
-        E.Message, mtError, [mbOK], 0);
+      MessageDlg('LazMD', 'Could not save ' + FFile + LineEnding + E.Message, mtError, [mbOK], 0);
       Exit(False);
     end;
   end;
@@ -222,25 +215,25 @@ begin
   Result := True;
 end;
 
-function TfrmMain.SaveFileAs: Boolean;
+function TfrmMain.SaveFileAs: boolean;
 begin
   if FFile <> '' then dlgSave.FileName := FFile
-  else dlgSave.FileName := 'untitled.md';
+  else
+    dlgSave.FileName := 'untitled.md';
   if not dlgSave.Execute then Exit(False);
   FFile := dlgSave.FileName;
   Result := SaveFile;
 end;
 
-function TfrmMain.ConfirmClose: Boolean;
+function TfrmMain.ConfirmClose: boolean;
 begin
   PullFromEditor;
   if not FDirty then Exit(True);
-  case MessageDlg('LazMD', 'Save changes to ' + DisplayName + '?',
-    mtConfirmation, [mbYes, mbNo, mbCancel], 0) of
+  case MessageDlg('LazMD', 'Save changes to ' + DisplayName + '?', mtConfirmation, [mbYes, mbNo, mbCancel], 0) of
     mrYes: Result := SaveFile;
     mrNo: Result := True;
-  else
-    Result := False;
+    else
+      Result := False;
   end;
 end;
 
@@ -268,7 +261,7 @@ end;
 
 procedure TfrmMain.RenderView;
 var
-  Y: Integer;
+  Y: integer;
 begin
   Y := pageView.ScrollY;
   pageView.LoadMarkdown(memRaw.Text, BaseURI);
@@ -380,7 +373,7 @@ end;
 procedure TfrmMain.PageLinkClick(Sender: TObject; const URL: string);
 var
   Abs, FileName, Anchor, Ext: string;
-  P: Integer;
+  P: integer;
 begin
   if Pos('#', URL) = 1 then
   begin
@@ -388,8 +381,7 @@ begin
     Exit;
   end;
   Abs := pageView.ResolveURL(URL);
-  if (Pos('http://', Abs) = 1) or (Pos('https://', Abs) = 1) or
-    (Pos('mailto:', Abs) = 1) then
+  if (Pos('http://', Abs) = 1) or (Pos('https://', Abs) = 1) or (Pos('mailto:', Abs) = 1) then
   begin
     OpenURL(Abs);
     Exit;
@@ -405,8 +397,7 @@ begin
   if Pos('file://', Abs) = 1 then URIToFilename(Abs, FileName)
   else if FilenameIsAbsolute(Abs) then FileName := Abs;
   Ext := LowerCase(ExtractFileExt(FileName));
-  if (FileName <> '') and FileExists(FileName) and
-    ((Ext = '.md') or (Ext = '.markdown')) then
+  if (FileName <> '') and FileExists(FileName) and ((Ext = '.md') or (Ext = '.markdown')) then
   begin
     { a linked Markdown file becomes the document, like following a link }
     if not ConfirmClose then Exit;
@@ -465,7 +456,7 @@ end;
 
 { -------------------------------------------------------- file association }
 
-function TfrmMain.RegisterWithSystem(AInstall: Boolean): string;
+function TfrmMain.RegisterWithSystem(AInstall: boolean): string;
 var
   R: TFileAssResult;
   {$IFDEF LINUX}
@@ -473,12 +464,13 @@ var
   {$ENDIF}
 begin
   FileAss.ExecutablePath := ExpandFileName(ParamStr(0));
-  if AInstall then R := FileAss.RegisterAll else R := FileAss.UnregisterAll;
+  if AInstall then R := FileAss.RegisterAll
+  else
+    R := FileAss.UnregisterAll;
   if not R.Succeeded then Exit(R.Message);
   if not AInstall then
     Exit('LazMD is no longer registered for Markdown files.');
-  Result := 'Registered. Use your file manager''s Open With to make ' +
-    'LazMD the default.';
+  Result := 'Registered. Use your file manager''s Open With to make ' + 'LazMD the default.';
   {$IFDEF LINUX}
   { FileAss registers without stealing defaults; being made the default is
     exactly what this menu item asks for, so ask the desktop directly }
@@ -508,13 +500,13 @@ const
   cHead = $00DE862E;    // blue   (TColor is BGR)
   cMark = $001980E6;    // orange
   cCode = $00847016;    // teal
-  cDim  = $008D8C7F;    // gray
+  cDim = $008D8C7F;    // gray
 var
-  i, j, CP, N, LineStart: Integer;
+  i, j, CP, N, LineStart: integer;
   L: string;
-  InFence, Table: Boolean;
+  InFence, Table: boolean;
 
-  procedure Put(AAt: Integer; AColor: TColor; AStyle: TFontStyles);
+  procedure Put(AAt: integer; AColor: TColor; AStyle: TFontStyles);
   begin
     if (AAt >= 0) and (AAt < N) then
     begin
@@ -523,9 +515,9 @@ var
     end;
   end;
 
-  procedure PutRun(AFrom, ATo: Integer; AColor: TColor; AStyle: TFontStyles);
+  procedure PutRun(AFrom, ATo: integer; AColor: TColor; AStyle: TFontStyles);
   var
-    K: Integer;
+    K: integer;
   begin
     for K := AFrom to ATo do
       Put(K, AColor, AStyle);
@@ -563,8 +555,7 @@ begin
       j := 1;
       while (j <= Length(L)) and (L[j] = ' ') do Inc(j);
       { a list marker: -, *, + or 1. at the line's start }
-      if (j <= Length(L)) and (L[j] in ['-', '*', '+']) and
-        (j < Length(L)) and (L[j + 1] = ' ') then
+      if (j <= Length(L)) and (L[j] in ['-', '*', '+']) and (j < Length(L)) and (L[j + 1] = ' ') then
         PutRun(LineStart + j - 1, LineStart + j - 1, cMark, [fsBold])
       else if (j <= Length(L)) and (L[j] in ['0'..'9']) then
       begin
@@ -582,16 +573,18 @@ begin
       begin
         case L[j] of
           '`':
+          begin
+            Put(LineStart + CP, cMark, []);
+            Inc(j);
+            Inc(CP);
+            while (j <= Length(L)) and (L[j] <> '`') do
             begin
-              Put(LineStart + CP, cMark, []);
-              Inc(j); Inc(CP);
-              while (j <= Length(L)) and (L[j] <> '`') do
-              begin
-                Put(LineStart + CP, cCode, []);
-                Inc(j, UTF8CodepointSize(@L[j])); Inc(CP);
-              end;
-              if j <= Length(L) then Put(LineStart + CP, cMark, []);
+              Put(LineStart + CP, cCode, []);
+              Inc(j, UTF8CodepointSize(@L[j]));
+              Inc(CP);
             end;
+            if j <= Length(L) then Put(LineStart + CP, cMark, []);
+          end;
           '*', '_', '~':
             Put(LineStart + CP, cMark, []);
           '[', ']', '(', ')':
@@ -610,8 +603,7 @@ begin
   end;
 end;
 
-procedure TfrmMain.MdCharAttrs(Sender: TObject; AIndex: Integer;
-  const AChar: string; var AColor: TColor; var AStyle: TFontStyles);
+procedure TfrmMain.MdCharAttrs(Sender: TObject; AIndex: integer; const AChar: string; var AColor: TColor; var AStyle: TFontStyles);
 begin
   if (AIndex >= 1) and (AIndex <= Length(FMdColor)) then
   begin

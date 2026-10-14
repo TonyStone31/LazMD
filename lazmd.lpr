@@ -6,7 +6,10 @@ uses
   {$IFDEF UNIX}
   cthreads,
   {$ENDIF}
-  Interfaces, Forms, SysUtils, Main;
+  Interfaces,
+  Forms,
+  SysUtils,
+  Main;
 
 begin
   RequireDerivedFormResource := True;
