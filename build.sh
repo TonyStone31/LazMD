@@ -12,7 +12,8 @@
 set -euo pipefail
 cd "$(dirname "$0")"
 LAZBUILD=${LAZBUILD:-lazbuild}
-release="-O2 -Xs"
+# -g- first: the project's debug info makes FPC ignore -Xs; -XX -CX drops unused code
+release="-g- -O2 -Xs -XX -CX"
 
 # pack <zip name> <program>: the program, the README and the license
 pack() {

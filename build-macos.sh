@@ -22,7 +22,7 @@ fi
 app="dist/LazMD.app"
 # first, so a build that fails leaves nothing that looks like its result
 rm -rf "$app" dist/icon.iconset dist/lazmd-macos.zip
-"$LAZBUILD" --ws=cocoa --opt="-WM$MIN_MACOS -O2 -Xs" lazmd.lpi
+"$LAZBUILD" --ws=cocoa --opt="-WM$MIN_MACOS -g- -O2 -Xs -XX -CX" lazmd.lpi
 mkdir -p "$app/Contents/MacOS" "$app/Contents/Resources" dist/icon.iconset
 cp lazmd "$app/Contents/MacOS/"
 for size in 16 32 128 256 512; do
