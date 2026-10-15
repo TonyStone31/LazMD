@@ -61,9 +61,11 @@ fetch.
 
 ## Use it for Markdown files
 
-**File → Open Markdown files with LazMD** registers the application and,
-on Linux, makes it the default handler for `text/markdown`. The same from
-a terminal:
+**File → Create System File Association for .md** registers LazMD with
+the system for `.md` files and, on Linux, makes it the default program for
+`text/markdown`. On Windows and macOS, pick LazMD once with Open With to
+make it the default. **Remove System File Association for .md** undoes it.
+The same from a terminal:
 
 ```sh
 ./lazmd --register

@@ -322,11 +322,11 @@ object frmMain: TfrmMain
         Caption = '-'
       end
       object miRegister: TMenuItem
-        Caption = 'Open &Markdown files with LazMD'
+        Caption = 'Create System File &Association for .md'
         OnClick = RegisterClick
       end
       object miUnregister: TMenuItem
-        Caption = 'Stop opening Markdown files with LazMD'
+        Caption = 'Remove System File Association for .md'
         OnClick = UnregisterClick
       end
       object miSep2: TMenuItem
@@ -461,7 +461,7 @@ object frmMain: TfrmMain
   object FileAss: TFileAssMan
     ApplicationID = 'io.github.tonystone31.lazmd'
     ApplicationName = 'LazMD'
-    ApplicationDescription = 'Markdown viewer and editor'
+    ApplicationDescription = 'Markdown editor'
     ShowInApplicationMenu = True
     LinuxApplicationIcon = 'icons/lazmd.svg'
     FileTypes = <

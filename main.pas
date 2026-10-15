@@ -294,11 +294,11 @@ begin
       Exit(False);
     end;
   end;
-  // Save As watches the new name; our own write is not news
+  // after Save As, watch the new name; our own save is not an outside change
   Eye.Path := FFile;
   Eye.Enabled := True;
   Eye.MarkOwnWrite(FFile);
-  // a save settles whatever the bar asked
+  // a save answers whatever the bar was asking
   Bar.Hide;
   FDirty := False;
   FGone := False;
@@ -798,32 +798,32 @@ begin
     R := FileAss.UnregisterAll;
   if not R.Succeeded then Exit(R.Message);
   if not AInstall then
-    Exit('LazMD is no longer registered for Markdown files.');
-  Result := 'Registered. Use your file manager''s Open With to make ' + 'LazMD the default.';
+    Exit('The system file association for .md is removed.');
+  Result := 'The system file association for .md is created. To make LazMD the default program, use Open With in your file manager.';
   {$IFDEF LINUX}
-  { FileAss registers without stealing defaults; being made the default is
-    exactly what this menu item asks for, so ask the desktop directly }
+  { FileAss registers without changing the default program; this menu item
+    asks for the default, so set it with xdg-mime }
   if RunCommand('/usr/bin/xdg-mime', ['default',
     FileAss.ApplicationID + '.desktop', 'text/markdown'], CmdOut) then
-    Result := 'Markdown files now open with LazMD.';
+    Result := 'The system file association for .md is created; LazMD is the default program.';
   {$ENDIF}
 end;
 
 procedure TfrmMain.RegisterClick(Sender: TObject);
 begin
-  ShowMessage(RegisterWithSystem(True));
+  Toast.Show(RegisterWithSystem(True));
 end;
 
 procedure TfrmMain.UnregisterClick(Sender: TObject);
 begin
-  ShowMessage(RegisterWithSystem(False));
+  Toast.Show(RegisterWithSystem(False));
 end;
 
 { ---------------------------------------------------------- the raw colors }
 
 { The source colored as Markdown: headings blue, markers and fences orange,
-  code teal, quotes gray - wrong here and there, like any small highlighter,
-  and still a world better than plain. }
+  code teal, quotes gray.  Line by line, so a construct spanning lines can
+  be colored wrong. }
 procedure TfrmMain.MdRecolor;
 const
   cHead = $00DE862E;    // blue   (TColor is BGR)
