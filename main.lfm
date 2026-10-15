@@ -257,6 +257,7 @@ object frmMain: TfrmMain
       Align = alClient
       Font.Height = -15
       ParentFont = False
+      ParagraphSpacing = True
       TabOrder = 2
       Visible = False
       OnEnter = EditorEnter
