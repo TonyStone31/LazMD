@@ -22,7 +22,7 @@ interface
 
 uses
   Classes, SysUtils, Forms, Controls, Graphics, Dialogs, Menus, Buttons,
-  ExtCtrls, StdCtrls, LCLIntf, LCLType, LazUTF8, ComCtrls,
+  ExtCtrls, StdCtrls, LCLIntf, LCLType, LazUTF8,
   InkRichEdit, InkCodeMemo, InkLabel,
   FileAssMan, FATypes, FileEye, InfoBar, Toast;
 
@@ -67,7 +67,6 @@ type
     miModeEdit, miModeRaw, miSplit: TMenuItem;
 
     pnlTools, pnlDocument: TPanel;
-    tabsViews: TTabControl;
     splSource: TSplitter;
     btnUndo, btnRedo, btnBold, btnItalic, btnStrike, btnInlineCode, btnLink, btnImage: TSpeedButton;
     btnKindH1, btnKindH2, btnKindBullet, btnKindNumber, btnKindQuote, btnKindCode, btnTable: TSpeedButton;
@@ -95,7 +94,6 @@ type
     procedure UnregisterClick(Sender: TObject);
     procedure ModeClick(Sender: TObject);
     procedure ToolsResize(Sender: TObject);
-    procedure ModeTabChange(Sender: TObject);
     procedure SplitClick(Sender: TObject);
     procedure EditorEnter(Sender: TObject);
     procedure EditAction(Sender: TObject);
@@ -415,12 +413,6 @@ begin
   finally
     pnlDocument.EnableAlign;
   end;
-  FSyncing := True;
-  try
-    tabsViews.TabIndex := Ord(AMode)
-  finally
-    FSyncing := False
-  end;
   miSplit.Checked := FSplit;
   Bar.Control := Content;
   miModeEdit.Checked := AMode = lmEdit;
@@ -462,16 +454,10 @@ begin
   end;
 end;
 
-{ The menu and tabs select the same editor. }
+{ the Mode menu's items; the mode is in the Tag }
 procedure TfrmMain.ModeClick(Sender: TObject);
 begin
   SetMode(TLazMDMode((Sender as TComponent).Tag));
-end;
-
-procedure TfrmMain.ModeTabChange(Sender: TObject);
-begin
-  if FSyncing then Exit;
-  SetMode(TLazMDMode(tabsViews.TabIndex));
 end;
 
 procedure TfrmMain.SplitClick(Sender: TObject);

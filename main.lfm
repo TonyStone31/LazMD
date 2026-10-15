@@ -231,27 +231,16 @@ object frmMain: TfrmMain
     end
   end
   object lblFile: TInkLabel
-    Top = 696
+    Left = 8
     Height = 24
+    Top = 696
+    Width = 904
     Align = alBottom
     BorderSpacing.Left = 8
     BorderSpacing.Right = 8
     AutoSize = False
     Caption = ' '
-  end
-  object tabsViews: TTabControl
-    Left = 0
-    Top = 666
-    Height = 30
-    Width = 920
-    Align = alBottom
-    TabPosition = tpBottom
-    TabIndex = 0
-    Tabs.Strings = (
-      'Rendered'
-      'Raw'
-    )
-    OnChange = ModeTabChange
+    VertAlign = ivaCenter
   end
   object pnlDocument: TPanel
     Left = 0

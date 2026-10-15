@@ -6,17 +6,20 @@ It shows a
 `.md` file rendered, with headings, tables, images and code, instead of as
 plain text, and you edit it right there. One document per window:
 
-- **Rendered** — type into the page itself. Ctrl+B/I/U, toolbar buttons for
-  headings, lists, quotes, code, links, images and tables. Ctrl+click
-  follows a link: web links open in the browser, links to other Markdown
-  files open in LazMD. Right-click, **Go to source** shows the same spot in
-  Raw.
-- **Raw** — the Markdown source, with syntax coloring.
-- **Mode → Side by side** shows both, each following the other's edits.
+- **Rendered** (Ctrl+1) — type into the page itself. Ctrl+B/I/U, toolbar
+  buttons for headings, lists, quotes, code, links, images and tables.
+  Ctrl+click follows a link: web links open in the browser, links to other
+  Markdown files open in LazMD. Right-click, **Go to source** shows the
+  same spot in Raw.
+- **Raw** (Ctrl+2) — the Markdown source, with syntax coloring.
+- **Side by side** (Ctrl+3) — both at once, each following the other's
+  edits.
 
-![LazMD showing its own README on Linux](images/lazmd-linux.png)
+The three are in the **Mode** menu.
 
-![The same on macOS](images/lazmd-macos.png)
+![LazMD side by side on Linux](images/lazmd-linux.png)
+
+![The same on macOS, in dark mode](images/lazmd-macos.png)
 
 The file is always saved from the Markdown source, so a file that is only
 opened and read is never reformatted. An edit in Rendered rewrites only the

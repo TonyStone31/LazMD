@@ -9,7 +9,7 @@ directory. The Linux harness uses GTK3; run it on an isolated X display.
 DISPLAY=:9 GDK_BACKEND=x11 ./tests/run.sh
 ```
 
-The form checks exercise the real resources, formatting actions, mode tabs,
+The form checks exercise the real resources, formatting actions, mode switching,
 optional split layout, narrow toolbar layout, saved Markdown, undo after save,
 and repeated external-change questions. They use temporary documents and do
 not register file associations. An optional first argument saves a form image;

@@ -105,7 +105,7 @@ begin
       Check(Window.pnlTools.Visible and Window.reDoc.Visible, 'documents open in rendered editing mode');
       Check(Window.FindComponent('pageView') = nil, 'no separate read-only viewer');
       Check(Window.FindComponent('btnOpen') = nil, 'no duplicate Open button');
-      Check(Window.FindComponent('sbRaw') = nil, 'mode choices belong to the menu');
+      Check((Window.FindComponent('sbRaw') = nil) and (Window.FindComponent('tabsViews') = nil), 'mode choices belong to the menu');
       Window.ModeClick(Window.miModeEdit);
       Check(Window.pnlTools.Visible and Window.miModeEdit.Checked, 'Rendered shows the formatting toolbar');
       Window.FileSaveClick(nil);
@@ -144,13 +144,11 @@ begin
       Window.SplitClick(nil);
       Check(Window.reDoc.Visible and Window.memRaw.Visible and Window.splSource.Visible,
         'optional split displays both editable panes');
-      Window.tabsViews.TabIndex := 1;
-      Window.ModeTabChange(nil);
+      Window.ModeClick(Window.miModeRaw);
       Window.memRaw.Text := Window.memRaw.Text + ' appended';
       Window.RawChanged(nil);
       Check(Pos('appended', Window.reDoc.PlainText) > 0, 'raw edits update rendered split pane');
-      Window.tabsViews.TabIndex := 0;
-      Window.ModeTabChange(nil);
+      Window.ModeClick(Window.miModeEdit);
       Window.reDoc.SelStart := Pos('world', Window.reDoc.PlainText) - 1;
       Window.reDoc.SelLength := 5;
       Window.EditAction(Window.btnItalic);
@@ -180,13 +178,13 @@ begin
       end;
       Window.Bar.Hide('changed');
       Window.reDoc.GoToSource;
-      Check(Window.tabsViews.TabIndex = 1, 'Go to source opens the Raw tab');
+      Check(Window.miModeRaw.Checked, 'Go to source opens the Raw tab');
       Check(Window.memRaw.SelText = 'world', 'Go to source highlights selected source text');
       Window.ModeClick(Window.miModeEdit);
       Window.reDoc.SelStart := Pos('world', Window.reDoc.PlainText) + 1;
       Window.reDoc.SelLength := 0;
       Window.reDoc.GoToSource;
-      Check((Window.tabsViews.TabIndex = 1) and (Window.memRaw.SelLength = 0), 'caret navigation opens Raw without selecting text');
+      Check((Window.miModeRaw.Checked) and (Window.memRaw.SelLength = 0), 'caret navigation opens Raw without selecting text');
       Check(Copy(Window.memRaw.Text, Window.memRaw.SelStart + 1, 3) = 'rld', 'caret navigation locates formatted text');
       PictureName := FileName + ' space #image.bmp';
       Shot := TBitmap.Create;
@@ -272,7 +270,7 @@ begin
           Window.reDoc.SelLength := 0;
           TRichAccess(Window.reDoc).RightClick(5, 8);
           Window.reDoc.GoToSource;
-          Check((Window.tabsViews.TabIndex = 1) and (Pos('![', Window.memRaw.SelText) = 1), 'right click image goes straight to its complete source');
+          Check((Window.miModeRaw.Checked) and (Pos('![', Window.memRaw.SelText) = 1), 'right click image goes straight to its complete source');
           Window.ModeClick(Window.miModeEdit);
           Window.reDoc.Undo;
           Window.FileSaveClick(nil);
@@ -290,7 +288,7 @@ begin
         Window.reDoc.SelStart := Pos('Beta', Window.reDoc.PlainText);
         Window.reDoc.SelLength := 0;
         Window.reDoc.GoToSource;
-        Check((Window.tabsViews.TabIndex = 1) and (Window.memRaw.SelLength = 0), 'table caret opens its source without selection');
+        Check((Window.miModeRaw.Checked) and (Window.memRaw.SelLength = 0), 'table caret opens its source without selection');
         Check(Copy(Window.memRaw.Text, Window.memRaw.SelStart + 1, 3) = 'eta', 'table caret maps to matching source cell');
         Window.ModeClick(Window.miModeEdit);
       finally
