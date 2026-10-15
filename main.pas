@@ -62,7 +62,7 @@ type
     mnuFile: TMenuItem;
     miNew, miOpen, miSave, miSaveAs, miSep1, miRegister, miUnregister, miSep2, miQuit: TMenuItem;
     mnuMode, mnuEdit: TMenuItem;
-    miUndo, miRedo, miCut, miCopy, miPaste, miSelectAll: TMenuItem;
+    miUndo, miRedo, miCut, miCopy, miPaste, miSelectAll, miFind: TMenuItem;
     miBold, miItalic, miStrike, miInlineCode, miLink, miImage: TMenuItem;
     miModeEdit, miModeRaw, miSplit: TMenuItem;
 
@@ -536,6 +536,11 @@ begin
     9: Editor.CopyToClipboard;
     10: Editor.PasteFromClipboard;
     11: Editor.SelectAll;
+    12:
+    begin
+      Editor.ShowFindBar;
+      Exit;
+    end;
   end;
   Editor.SetFocus;
   UpdateKindButtons;

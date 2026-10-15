@@ -379,6 +379,12 @@ object frmMain: TfrmMain
         ShortCut = 16449
         OnClick = EditAction
       end
+      object miFind: TMenuItem
+        Caption = '&Find...'
+        Tag = 12
+        ShortCut = 16454
+        OnClick = EditAction
+      end
       object miEditSep2: TMenuItem
         Caption = '-'
       end

@@ -108,6 +108,9 @@ begin
       Check((Window.FindComponent('sbRaw') = nil) and (Window.FindComponent('tabsViews') = nil), 'mode choices belong to the menu');
       Window.ModeClick(Window.miModeEdit);
       Check(Window.pnlTools.Visible and Window.miModeEdit.Checked, 'Rendered shows the formatting toolbar');
+      Window.EditAction(Window.miFind);
+      Check(Window.reDoc.FindBarVisible, 'Edit > Find opens the find bar');
+      Window.reDoc.HideFindBar;
       Window.FileSaveClick(nil);
       Check(ReadMarkdownFile(FileName) = Source, 'save in untouched Edit preserves every byte');
       Window.reDoc.SelStart := Pos('hello', Window.reDoc.PlainText) - 1;
