@@ -1,0 +1,152 @@
+object frmImageInsert: TfrmImageInsert
+  Left = 10
+  Height = 572
+  Top = 10
+  Width = 560
+  BorderStyle = bsDialog
+  Caption = 'Insert image'
+  ClientHeight = 572
+  ClientWidth = 560
+  Position = poOwnerFormCenter
+  ActiveControl = edSource
+  object lblSource: TLabel
+    Left = 16
+    Top = 16
+    Caption = 'Picture file or URL'
+    FocusControl = edSource
+  end
+  object edSource: TEdit
+    Left = 16
+    Top = 38
+    Width = 428
+    Height = 30
+    TabOrder = 0
+    OnChange = SourceChange
+  end
+  object btnBrowse: TButton
+    Left = 452
+    Top = 38
+    Width = 92
+    Height = 30
+    Caption = '&Browse...'
+    TabOrder = 1
+    OnClick = BrowseClick
+  end
+  object lblAlt: TLabel
+    Left = 16
+    Top = 80
+    Caption = 'Alternative text (describe the picture)'
+    FocusControl = edAlt
+  end
+  object edAlt: TEdit
+    Left = 16
+    Top = 102
+    Width = 528
+    Height = 30
+    TabOrder = 2
+  end
+  object lblTitle: TLabel
+    Left = 16
+    Top = 144
+    Caption = 'Title (optional)'
+    FocusControl = edTitle
+  end
+  object edTitle: TEdit
+    Left = 16
+    Top = 166
+    Width = 528
+    Height = 30
+    TabOrder = 3
+  end
+  object chkRelative: TCheckBox
+    Left = 16
+    Top = 208
+    Width = 528
+    Height = 24
+    Caption = 'Use a path relative to this document'
+    Checked = True
+    State = cbChecked
+    TabOrder = 4
+    OnChange = SourceChange
+  end
+  object chkCopy: TCheckBox
+    Left = 16
+    Top = 238
+    Width = 528
+    Height = 24
+    Caption = 'Copy local picture into folder:'
+    TabOrder = 5
+    OnChange = SourceChange
+  end
+  object edFolder: TEdit
+    Left = 16
+    Top = 266
+    Width = 528
+    Height = 30
+    Text = 'assets'
+    TabOrder = 6
+    OnChange = SourceChange
+  end
+  object lblPath: TLabel
+    Left = 16
+    Top = 450
+    Caption = 'Image path in Markdown'
+    FocusControl = edPath
+  end
+  object edPath: TEdit
+    Left = 16
+    Top = 474
+    Width = 528
+    Height = 30
+    ReadOnly = True
+    TabOrder = 7
+  end
+  object lblPreview: TLabel
+    Left = 16
+    Top = 308
+    Caption = 'Preview'
+  end
+  object preview: TImage
+    Left = 16
+    Top = 330
+    Width = 144
+    Height = 120
+    Center = True
+    Proportional = True
+    Stretch = True
+  end
+  object lblStatus: TLabel
+    Left = 176
+    Top = 330
+    Width = 368
+    Height = 80
+    AutoSize = False
+    WordWrap = True
+  end
+  object btnInsert: TButton
+    Left = 348
+    Top = 526
+    Width = 96
+    Height = 30
+    Caption = '&Insert'
+    Default = True
+    Enabled = False
+    OnClick = InsertClick
+    TabOrder = 8
+  end
+  object btnCancel: TButton
+    Left = 452
+    Top = 526
+    Width = 92
+    Height = 30
+    Caption = 'Cancel'
+    Cancel = True
+    ModalResult = 2
+    TabOrder = 9
+  end
+  object dlgPicture: TOpenDialog
+    Title = 'Choose a picture'
+    Filter = 'Pictures|*.png;*.jpg;*.jpeg;*.gif;*.bmp;*.webp;*.ico|All files|*'
+    Options = [ofFileMustExist, ofEnableSizing, ofViewDetail]
+  end
+end

@@ -4,21 +4,24 @@
 
 It shows a
 `.md` file rendered, with headings, tables, images and code, instead of as
-plain text. One document per window, in three modes:
+plain text, and you edit it right there. One document per window:
 
-- **View** — the rendered page. Links work: web links open in the browser,
-  links to other Markdown files open in LazMD.
-- **Edit** — type into the rendered page itself. Ctrl+B/I/U, and toolbar
-  buttons for headings, lists, quotes, code and tables.
+- **Rendered** — type into the page itself. Ctrl+B/I/U, toolbar buttons for
+  headings, lists, quotes, code, links, images and tables. Ctrl+click
+  follows a link: web links open in the browser, links to other Markdown
+  files open in LazMD. Right-click, **Go to source** shows the same spot in
+  Raw.
 - **Raw** — the Markdown source, with syntax coloring.
+- **Mode → Side by side** shows both, each following the other's edits.
 
 ![LazMD showing its own README on Linux](images/lazmd-linux.png)
 
 ![The same on macOS](images/lazmd-macos.png)
 
 The file is always saved from the Markdown source, so a file that is only
-opened and read is never reformatted. Edits made in Edit mode are written
-back into the source when you switch modes or save.
+opened and read is never reformatted. An edit in Rendered rewrites only the
+paragraph, list or table it touched; the rest of the file keeps its exact
+bytes, line endings and all.
 
 When another program changes the open file, LazMD reloads it and shows a
 short notice. If there are unsaved edits, a bar above the text asks whether

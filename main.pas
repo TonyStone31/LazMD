@@ -1,17 +1,12 @@
-{ LazMD - a small Markdown viewer and editor built on LazInk.
+{ LazMD - a small Markdown editor built on LazInk.
 
-  One document, three ways to look at it:
+  Rendered - the page itself, edited in place (TInkRichEdit).
+  Raw      - the Markdown source, lightly colored (TInkCodeMemo).
+  Split    - both side by side, each following the other's edits.
 
-    View - the page as a browser would show it (TInkPage): images, tables,
-           code highlighting, links that work.
-    Edit - the rendered text, edited in place (TInkRichEdit): type into the
-           page itself, Ctrl+B/I/U, the toolbar's paragraph buttons.
-    Raw  - the Markdown source, lightly colored (TInkCodeMemo).
-
-  The raw source is the document. View renders it; Edit projects it into
-  the WYSIWYG editor and folds changes back when you leave or save. The
-  file on disk is only ever written from the source text, so opening a
-  file and just reading it never reformats a byte.
+  The source text is the document. An edit in Rendered rewrites only the
+  blocks it touched, so opening, reading and saving a file never
+  reformats a byte of it.
 
   lazmd FILE          opens FILE.
   lazmd --register    registers .md with the desktop and exits.
@@ -27,12 +22,12 @@ interface
 
 uses
   Classes, SysUtils, Forms, Controls, Graphics, Dialogs, Menus, Buttons,
-  ExtCtrls, StdCtrls, LCLIntf, LCLType, LazUTF8,
-  InkPage, InkRichEdit, InkCodeMemo, InkLabel,
+  ExtCtrls, StdCtrls, LCLIntf, LCLType, LazUTF8, ComCtrls,
+  InkRichEdit, InkCodeMemo, InkLabel,
   FileAssMan, FATypes, FileEye, InfoBar, Toast;
 
 type
-  TLazMDMode = (lmView, lmEdit, lmRaw);
+  TLazMDMode = (lmEdit, lmRaw);
 
   TTablePickEvent = procedure(ACols, ARows: integer) of object;
 
@@ -66,16 +61,18 @@ type
     mnuMain: TMainMenu;
     mnuFile: TMenuItem;
     miNew, miOpen, miSave, miSaveAs, miSep1, miRegister, miUnregister, miSep2, miQuit: TMenuItem;
-    mnuView: TMenuItem;
-    miModeView, miModeEdit, miModeRaw: TMenuItem;
+    mnuMode, mnuEdit: TMenuItem;
+    miUndo, miRedo, miCut, miCopy, miPaste, miSelectAll: TMenuItem;
+    miBold, miItalic, miStrike, miInlineCode, miLink, miImage: TMenuItem;
+    miModeEdit, miModeRaw, miSplit: TMenuItem;
 
-    pnlTools: TPanel;
-    btnOpen, btnSave: TButton;
-    sbView, sbEdit, sbRaw: TSpeedButton;
+    pnlTools, pnlDocument: TPanel;
+    tabsViews: TTabControl;
+    splSource: TSplitter;
+    btnUndo, btnRedo, btnBold, btnItalic, btnStrike, btnInlineCode, btnLink, btnImage: TSpeedButton;
     btnKindH1, btnKindH2, btnKindBullet, btnKindNumber, btnKindQuote, btnKindCode, btnTable: TSpeedButton;
     lblFile: TInkLabel;
 
-    pageView: TInkPage;
     reDoc: TInkRichEdit;
     memRaw: TInkCodeMemo;
 
@@ -97,22 +94,33 @@ type
     procedure RegisterClick(Sender: TObject);
     procedure UnregisterClick(Sender: TObject);
     procedure ModeClick(Sender: TObject);
+    procedure ToolsResize(Sender: TObject);
+    procedure ModeTabChange(Sender: TObject);
+    procedure SplitClick(Sender: TObject);
+    procedure EditorEnter(Sender: TObject);
+    procedure EditAction(Sender: TObject);
+    procedure ImageClick(Sender: TObject);
     procedure PageLinkClick(Sender: TObject; const URL: string);
     procedure RawChanged(Sender: TObject);
     procedure DocChanged(Sender: TObject);
     procedure DocSelectionChange(Sender: TObject);
+    procedure DocGoToSource(Sender: TObject);
     procedure btnKindClick(Sender: TObject);
     procedure btnTableClick(Sender: TObject);
     procedure MdCharAttrs(Sender: TObject; AIndex: integer; const AChar: string; var AColor: TColor; var AStyle: TFontStyles);
     procedure EyeChange(Sender: TObject; const FileName: string; Change: TFileEyeChange);
     procedure BarAnswer(Sender: TObject; const Key: string; Answer: TModalResult);
   private
+    FSource: string;     // exact bytes; the raw memo normalizes line endings
     FFile: string;
     FMode: TLazMDMode;
+    FSplit: boolean;
+    FToolsLayout: boolean;
+    FImageRelative, FImageCopy: boolean;
+    FImageFolder: string;
     FDirty: boolean;      // the document differs from the file on disk
     FGone: boolean;       // the file was deleted under us
     FSyncing: boolean;    // a change of our own making, not the user's
-    FViewFresh: boolean;  // pageView shows the current source
     FEditFresh: boolean;  // reDoc holds the current source
     { the raw view's colors: whole lines classified once per change,
       the per-character event only reads the map }
@@ -120,10 +128,10 @@ type
     FMdStyle: array of TFontStyles;
     procedure SetMode(AMode: TLazMDMode);
     procedure Freshen;
+    procedure FreshenEditor;
     procedure ReloadFile;
     procedure TableSizePicked(ACols, ARows: integer);
     procedure PullFromEditor;
-    procedure RenderView;
     procedure MdRecolor;
     procedure ShowTitle;
     procedure UpdateKindButtons;
@@ -147,21 +155,20 @@ implementation
 {$R *.lfm}
 
 uses
-  Math, LazFileUtils, URIParser, Process, InkDraw;
+  Math, LazFileUtils, URIParser, Process, InkDraw, InkMarkdown, MDSource, ImageInsert;
 
   { ------------------------------------------------------------------ startup }
 
 procedure TfrmMain.FormCreate(Sender: TObject);
 begin
-  FMode := lmView;
+  FMode := lmEdit;
   FFile := '';
+  FEditFresh := True;
+  FImageRelative := True;
+  FImageFolder := 'assets';
+  SetMode(lmEdit);
+  ToolsResize(nil);
   ShowTitle;
-  UpdateKindButtons;
-  { an empty start still greets; the greeting is view-only and vanishes
-    the moment anything real is loaded or typed }
-  pageView.LoadMarkdown('# LazMD' + LineEnding + LineEnding + 'A Markdown file, shown the way it was written to be read.' + LineEnding +
-    LineEnding + '- **Open** a file (Ctrl+O) or drop one on the window' + LineEnding + '- **View** is the rendered page; links work' +
-    LineEnding + '- **Edit** types into the rendered page itself' + LineEnding + '- **Raw** is the source' + LineEnding, '');
 end;
 
 procedure TfrmMain.FormCloseQuery(Sender: TObject; var CanClose: boolean);
@@ -187,12 +194,9 @@ end;
 { the visible view; the bar is pinned to it }
 function TfrmMain.Content: TControl;
 begin
-  case FMode of
-    lmEdit: Result := reDoc;
-    lmRaw: Result := memRaw;
-    else
-      Result := pageView;
-  end;
+  if FMode = lmRaw then Result := memRaw
+  else
+    Result := reDoc;
 end;
 
 function TfrmMain.BaseURI: string;
@@ -228,7 +232,8 @@ begin
   FSyncing := True;
   try
     try
-      memRaw.Lines.LoadFromFile(AFileName);
+      FSource := ReadMarkdownFile(AFileName);
+      memRaw.Text := MarkdownEditorText(FSource);
     except
       on E: Exception do
       begin
@@ -243,12 +248,10 @@ begin
   FFile := AFileName;
   FDirty := False;
   FGone := False;
-  FViewFresh := False;
   FEditFresh := False;
   reDoc.Modified := False;
   MdRecolor;
-  SetMode(lmView);
-  pageView.ScrollTo(0);
+  SetMode(lmEdit);
   ShowTitle;
   Eye.Path := FFile;
   Eye.Enabled := True;
@@ -261,7 +264,8 @@ begin
   FSyncing := True;
   try
     try
-      memRaw.Lines.LoadFromFile(FFile);
+      FSource := ReadMarkdownFile(FFile);
+      memRaw.Text := MarkdownEditorText(FSource);
     except
       // still being written; the next change brings the rest
       Exit;
@@ -272,7 +276,6 @@ begin
   Bar.Hide;
   FDirty := False;
   FGone := False;
-  FViewFresh := False;
   FEditFresh := False;
   reDoc.Modified := False;
   MdRecolor;
@@ -285,7 +288,7 @@ begin
   PullFromEditor;
   if FFile = '' then Exit(SaveFileAs);
   try
-    memRaw.Lines.SaveToFile(FFile);
+    WriteMarkdownFile(FFile, FSource);
   except
     on E: Exception do
     begin
@@ -307,13 +310,20 @@ begin
 end;
 
 function TfrmMain.SaveFileAs: boolean;
+var
+  OldFile: string;
 begin
   if FFile <> '' then dlgSave.FileName := FFile
   else
     dlgSave.FileName := 'untitled.md';
   if not dlgSave.Execute then Exit(False);
+  OldFile := FFile;
   FFile := dlgSave.FileName;
   Result := SaveFile;
+  if not Result then FFile := OldFile
+  else
+    reDoc.ImageBaseURI := BaseURI;
+  ShowTitle;
 end;
 
 function TfrmMain.ConfirmClose: boolean;
@@ -343,7 +353,11 @@ begin
   if (FMode <> lmEdit) or not reDoc.Modified then Exit;
   FSyncing := True;
   try
-    memRaw.Text := reDoc.AsMarkdown;
+    if Copy(FSource, 1, 3) = #$EF#$BB#$BF then
+      FSource := #$EF#$BB#$BF + reDoc.AsMarkdown
+    else
+      FSource := reDoc.AsMarkdown;
+    memRaw.Text := MarkdownEditorText(FSource);
   finally
     FSyncing := False;
   end;
@@ -351,40 +365,33 @@ begin
   MdRecolor;
   FDirty := True;
   FEditFresh := True;
-  FViewFresh := False;
   ShowTitle;
 end;
 
-procedure TfrmMain.RenderView;
+procedure TfrmMain.FreshenEditor;
 var
-  Y: integer;
+  Start, Count, Y: integer;
 begin
-  Y := pageView.ScrollY;
-  pageView.LoadMarkdown(memRaw.Text, BaseURI);
-  pageView.ScrollTo(Y);
-  FViewFresh := True;
+  if FEditFresh then Exit;
+  Start := reDoc.SelStart;
+  Count := reDoc.SelLength;
+  Y := reDoc.ScrollY;
+  FSyncing := True;
+  try
+    reDoc.LoadMarkdown(MarkdownContent(FSource), BaseURI);
+    reDoc.SelStart := Start;
+    reDoc.SelLength := Count;
+    reDoc.ScrollTo(Y);
+  finally
+    FSyncing := False;
+  end;
+  reDoc.Modified := False;
+  FEditFresh := True;
 end;
 
-{ Brings the view on show up to date with the source. }
 procedure TfrmMain.Freshen;
 begin
-  case FMode of
-    lmView:
-      if not FViewFresh then RenderView;
-    lmEdit:
-      if not FEditFresh then
-      begin
-        FSyncing := True;
-        try
-          reDoc.LoadMarkdown(memRaw.Text);
-        finally
-          FSyncing := False;
-        end;
-        reDoc.Modified := False;
-        FEditFresh := True;
-      end;
-    lmRaw: ;  // the source memo is always current
-  end;
+  if (FMode = lmEdit) or FSplit then FreshenEditor;
 end;
 
 procedure TfrmMain.SetMode(AMode: TLazMDMode);
@@ -392,34 +399,160 @@ begin
   PullFromEditor;
   FMode := AMode;
   Freshen;
-  pageView.Visible := AMode = lmView;
-  reDoc.Visible := AMode = lmEdit;
-  memRaw.Visible := AMode = lmRaw;
+  pnlDocument.DisableAlign;
+  try
+    reDoc.Visible := FSplit or (AMode = lmEdit);
+    memRaw.Visible := FSplit or (AMode = lmRaw);
+    splSource.Visible := FSplit;
+    if FSplit then
+    begin
+      memRaw.Align := alRight;
+      memRaw.Left := pnlDocument.ClientWidth - memRaw.Width;
+      splSource.Left := memRaw.Left - splSource.Width;
+    end
+    else
+      memRaw.Align := alClient;
+  finally
+    pnlDocument.EnableAlign;
+  end;
+  FSyncing := True;
+  try
+    tabsViews.TabIndex := Ord(AMode)
+  finally
+    FSyncing := False
+  end;
+  miSplit.Checked := FSplit;
   Bar.Control := Content;
-  sbView.Down := AMode = lmView;
-  sbEdit.Down := AMode = lmEdit;
-  sbRaw.Down := AMode = lmRaw;
-  btnKindH1.Visible := AMode = lmEdit;
-  btnKindH2.Visible := AMode = lmEdit;
-  btnKindBullet.Visible := AMode = lmEdit;
-  btnKindNumber.Visible := AMode = lmEdit;
-  btnKindQuote.Visible := AMode = lmEdit;
-  btnKindCode.Visible := AMode = lmEdit;
-  btnTable.Visible := AMode = lmEdit;
+  miModeEdit.Checked := AMode = lmEdit;
+  miModeRaw.Checked := AMode = lmRaw;
+  pnlTools.Visible := FSplit or (AMode = lmEdit);
   if Showing then
     case AMode of
-      lmView: if pageView.CanFocus then pageView.SetFocus;
       lmEdit: if reDoc.CanFocus then reDoc.SetFocus;
       lmRaw: if memRaw.CanFocus then memRaw.SetFocus;
     end;
   UpdateKindButtons;
 end;
 
-{ one handler for the three speed buttons and the three menu items;
-  the mode rides in the Tag }
+procedure TfrmMain.ToolsResize(Sender: TObject);
+var
+  I, X, Y: integer;
+  Button: TControl;
+begin
+  if FToolsLayout or (csLoading in ComponentState) then Exit;
+  FToolsLayout := True;
+  try
+    X := 8;
+    Y := 5;
+    for I := 0 to pnlTools.ControlCount - 1 do
+    begin
+      Button := pnlTools.Controls[I];
+      if (X > 8) and (X + Button.Width > pnlTools.ClientWidth - 8) then
+      begin
+        X := 8;
+        Inc(Y, 31);
+      end;
+      Button.SetBounds(X, Y, Button.Width, 28);
+      Inc(X, Button.Width + 3);
+      if (Button = btnRedo) or (Button = btnInlineCode) or (Button = btnLink) then Inc(X, 8);
+    end;
+    pnlTools.Height := Y + 33;
+  finally
+    FToolsLayout := False
+  end;
+end;
+
+{ The menu and tabs select the same editor. }
 procedure TfrmMain.ModeClick(Sender: TObject);
 begin
   SetMode(TLazMDMode((Sender as TComponent).Tag));
+end;
+
+procedure TfrmMain.ModeTabChange(Sender: TObject);
+begin
+  if FSyncing then Exit;
+  SetMode(TLazMDMode(tabsViews.TabIndex));
+end;
+
+procedure TfrmMain.SplitClick(Sender: TObject);
+begin
+  PullFromEditor;
+  FSplit := not FSplit;
+  if FSplit then memRaw.Width := Max(160, pnlDocument.ClientWidth div 2);
+  SetMode(FMode);
+end;
+
+procedure TfrmMain.EditorEnter(Sender: TObject);
+begin
+  if FSyncing or not FSplit then Exit;
+  if (Sender = memRaw) and (FMode <> lmRaw) then SetMode(lmRaw)
+  else if (Sender = reDoc) and (FMode <> lmEdit) then SetMode(lmEdit);
+end;
+
+procedure TfrmMain.ImageClick(Sender: TObject);
+var
+  Picker: TfrmImageInsert;
+begin
+  if FSplit then SetMode(lmEdit);
+  if (FMode <> lmEdit) or (reDoc.SelParaKind in [ipkCode, ipkSource]) then Exit;
+  Picker := TfrmImageInsert.Create(Self);
+  try
+    Picker.Prepare(FFile, reDoc.SelText);
+    Picker.chkRelative.Checked := FImageRelative;
+    Picker.chkCopy.Checked := FImageCopy;
+    Picker.edFolder.Text := FImageFolder;
+    if Picker.ShowModal = mrOk then
+    begin
+      FImageRelative := Picker.chkRelative.Checked;
+      FImageCopy := Picker.chkCopy.Checked;
+      FImageFolder := Picker.edFolder.Text;
+      reDoc.InsertImage(Picker.ImageSource, Picker.edAlt.Text, Picker.edTitle.Text);
+    end;
+  finally
+    Picker.Free
+  end;
+  reDoc.SetFocus;
+end;
+
+procedure TfrmMain.EditAction(Sender: TObject);
+var
+  Editor: TInkRichEdit;
+  URL: string;
+  Command: integer;
+begin
+  Command := (Sender as TComponent).Tag;
+  if FSplit and (Sender is TSpeedButton) and (Command in [3..7]) then SetMode(lmEdit);
+  if FMode = lmRaw then Editor := memRaw
+  else
+    Editor := reDoc;
+  if (Command in [3..7]) and (FMode <> lmEdit) then Exit;
+  case Command of
+    1: Editor.Undo;
+    2: Editor.Redo;
+    3: Editor.ApplyStyle(fsBold, not (fsBold in Editor.SelStyle));
+    4: Editor.ApplyStyle(fsItalic, not (fsItalic in Editor.SelStyle));
+    5: Editor.ApplyStyle(fsStrikeOut, not (fsStrikeOut in Editor.SelStyle));
+    6: if Editor.SelFace = '' then Editor.ApplyFace(InkMonoFace)
+      else
+        Editor.ApplyFace('');
+    7:
+    begin
+      if Editor.SelLength = 0 then
+      begin
+        Toast.Show('Select the text to link first.');
+        Exit;
+      end;
+      URL := Editor.SelLink;
+      if InputQuery('Link', 'Address (leave empty to remove the link):', URL) then
+        Editor.ApplyLink(Trim(URL));
+    end;
+    8: Editor.CutToClipboard;
+    9: Editor.CopyToClipboard;
+    10: Editor.PasteFromClipboard;
+    11: Editor.SelectAll;
+  end;
+  Editor.SetFocus;
+  UpdateKindButtons;
 end;
 
 { ------------------------------------------------------------------- events }
@@ -427,18 +560,20 @@ end;
 procedure TfrmMain.RawChanged(Sender: TObject);
 begin
   if FSyncing then Exit;
+  FSource := UpdateMarkdownSource(FSource, memRaw.Text);
   FDirty := True;
-  FViewFresh := False;
   FEditFresh := False;
+  if FSplit then FreshenEditor;
   MdRecolor;
+  UpdateKindButtons;
   ShowTitle;
 end;
 
 procedure TfrmMain.DocChanged(Sender: TObject);
 begin
   if FSyncing then Exit;
+  if FSplit then PullFromEditor;
   FDirty := True;
-  FViewFresh := False;
   ShowTitle;
   UpdateKindButtons;
 end;
@@ -482,8 +617,55 @@ begin
   UpdateKindButtons;
 end;
 
+procedure TfrmMain.DocGoToSource(Sender: TObject);
+var
+  First, Count: integer;
+  Source, Before, Selected: string;
+begin
+  PullFromEditor;
+  if not reDoc.MarkdownSourceRange(First, Count) then
+  begin
+    Toast.Show('Could not locate this position in the source.');
+    Exit;
+  end;
+  Source := MarkdownContent(FSource);
+  Before := StringReplace(Copy(Source, 1, First - 1), #13#10, #10, [rfReplaceAll]);
+  Before := StringReplace(Before, #13, #10, [rfReplaceAll]);
+  Selected := StringReplace(Copy(Source, First, Count), #13#10, #10, [rfReplaceAll]);
+  Selected := StringReplace(Selected, #13, #10, [rfReplaceAll]);
+  SetMode(lmRaw);
+  memRaw.SelStart := UTF8Length(Before);
+  memRaw.SelLength := UTF8Length(Selected);
+  memRaw.SetFocus;
+end;
+
 procedure TfrmMain.UpdateKindButtons;
 begin
+  if FMode = lmRaw then
+  begin
+    btnUndo.Enabled := memRaw.CanUndo;
+    btnRedo.Enabled := memRaw.CanRedo;
+  end
+  else
+  begin
+    btnUndo.Enabled := reDoc.CanUndo;
+    btnRedo.Enabled := reDoc.CanRedo;
+  end;
+  btnBold.Down := fsBold in reDoc.SelStyle;
+  btnItalic.Down := fsItalic in reDoc.SelStyle;
+  btnStrike.Down := fsStrikeOut in reDoc.SelStyle;
+  btnInlineCode.Down := reDoc.SelFace <> '';
+  miBold.Checked := btnBold.Down;
+  miItalic.Checked := btnItalic.Down;
+  miStrike.Checked := btnStrike.Down;
+  miInlineCode.Checked := btnInlineCode.Down;
+  miBold.Enabled := FMode = lmEdit;
+  miItalic.Enabled := FMode = lmEdit;
+  miStrike.Enabled := FMode = lmEdit;
+  miInlineCode.Enabled := FMode = lmEdit;
+  miLink.Enabled := FMode = lmEdit;
+  miImage.Enabled := (FMode = lmEdit) and not (reDoc.SelParaKind in [ipkCode, ipkSource]);
+  btnImage.Enabled := miImage.Enabled;
   btnKindH1.Down := reDoc.SelParaKind = ipkH1;
   btnKindH2.Down := reDoc.SelParaKind = ipkH2;
   btnKindBullet.Down := reDoc.SelParaKind = ipkBullet;
@@ -494,6 +676,7 @@ end;
 
 procedure TfrmMain.btnKindClick(Sender: TObject);
 begin
+  if FSplit then SetMode(lmEdit);
   if (Sender as TSpeedButton).Down then
     reDoc.ApplyParaKind(TInkParaKind((Sender as TSpeedButton).Tag))
   else
@@ -507,6 +690,7 @@ var
   Pick: TfrmTablePick;
   P: TPoint;
 begin
+  if FSplit then SetMode(lmEdit);
   Pick := TfrmTablePick.CreateNew(Self);
   Pick.OnPick := @TableSizePicked;
   P := btnTable.ClientToScreen(Point(0, btnTable.Height));
@@ -528,10 +712,10 @@ var
 begin
   if Pos('#', URL) = 1 then
   begin
-    pageView.JumpToAnchor(Copy(URL, 2, MaxInt));
+    reDoc.JumpToAnchor(Copy(URL, 2, MaxInt));
     Exit;
   end;
-  Abs := pageView.ResolveURL(URL);
+  if not ResolveRelativeURI(BaseURI, URL, Abs) then Abs := URL;
   if (Pos('http://', Abs) = 1) or (Pos('https://', Abs) = 1) or (Pos('mailto:', Abs) = 1) then
   begin
     OpenURL(Abs);
@@ -553,7 +737,7 @@ begin
     { a linked Markdown file becomes the document, like following a link }
     if not ConfirmClose then Exit;
     LoadFile(FileName);
-    if Anchor <> '' then pageView.JumpToAnchor(Anchor);
+    if Anchor <> '' then reDoc.JumpToAnchor(Anchor);
   end
   else if FileName <> '' then
     OpenDocument(FileName)
@@ -568,6 +752,7 @@ begin
   if not ConfirmClose then Exit;
   FSyncing := True;
   try
+    FSource := '';
     memRaw.Text := '';
   finally
     FSyncing := False;
@@ -577,7 +762,6 @@ begin
   FFile := '';
   FDirty := False;
   FGone := False;
-  FViewFresh := False;
   FEditFresh := False;
   reDoc.Modified := False;
   MdRecolor;

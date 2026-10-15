@@ -19,70 +19,124 @@ object frmMain: TfrmMain
     Top = 0
     Width = 920
     Align = alTop
+    Visible = False
     BevelOuter = bvNone
+    OnResize = ToolsResize
     ClientHeight = 38
     ClientWidth = 920
     TabOrder = 0
-    object btnOpen: TButton
+    object btnUndo: TSpeedButton
+      Tag = 1
       Left = 8
       Height = 28
       Top = 5
-      Width = 70
-      Caption = 'Open...'
-      TabOrder = 0
-      OnClick = FileOpenClick
+      Width = 48
+      Caption = 'Undo'
+      Hint = 'Undo (Ctrl+Z)'
+      ShowHint = True
+      ParentShowHint = False
+      OnClick = EditAction
     end
-    object btnSave: TButton
-      Left = 82
+    object btnRedo: TSpeedButton
+      Tag = 2
+      Left = 59
       Height = 28
       Top = 5
-      Width = 56
-      Caption = 'Save'
-      TabOrder = 1
-      OnClick = FileSaveClick
+      Width = 48
+      Caption = 'Redo'
+      Hint = 'Redo (Ctrl+Y)'
+      ShowHint = True
+      ParentShowHint = False
+      OnClick = EditAction
     end
-    object sbView: TSpeedButton
-      Left = 152
+    object btnBold: TSpeedButton
+      Tag = 3
+      Left = 118
       Height = 28
-      Hint = 'The rendered page'
+      Top = 5
+      Width = 28
+      Caption = 'B'
+      Hint = 'Bold (Ctrl+B)'
+      ShowHint = True
+      ParentShowHint = False
+      Font.Style = [fsBold]
+      ParentFont = False
+      AllowAllUp = True
+      GroupIndex = 13
+      OnClick = EditAction
+    end
+    object btnItalic: TSpeedButton
+      Tag = 4
+      Left = 149
+      Height = 28
+      Top = 5
+      Width = 28
+      Caption = 'I'
+      Hint = 'Italic (Ctrl+I)'
+      ShowHint = True
+      ParentShowHint = False
+      Font.Style = [fsItalic]
+      ParentFont = False
+      AllowAllUp = True
+      GroupIndex = 14
+      OnClick = EditAction
+    end
+    object btnStrike: TSpeedButton
+      Tag = 5
+      Left = 180
+      Height = 28
+      Top = 5
+      Width = 28
+      Caption = 'S'
+      Hint = 'Strikethrough (Ctrl+Shift+X)'
+      ShowHint = True
+      ParentShowHint = False
+      Font.Style = [fsStrikeOut]
+      ParentFont = False
+      AllowAllUp = True
+      GroupIndex = 15
+      OnClick = EditAction
+    end
+    object btnInlineCode: TSpeedButton
+      Tag = 6
+      Left = 211
+      Height = 28
+      Top = 5
+      Width = 38
+      Caption = '</>'
+      Hint = 'Inline code (Ctrl+E)'
+      ShowHint = True
+      ParentShowHint = False
+      AllowAllUp = True
+      GroupIndex = 16
+      OnClick = EditAction
+    end
+    object btnLink: TSpeedButton
+      Tag = 7
+      Left = 260
+      Height = 28
+      Top = 5
+      Width = 42
+      Caption = 'Link'
+      Hint = 'Link (Ctrl+K)'
+      ShowHint = True
+      ParentShowHint = False
+      OnClick = EditAction
+    end
+    object btnImage: TSpeedButton
+      Left = 305
+      Height = 28
       Top = 5
       Width = 52
-      Caption = 'View'
-      Down = True
-      GroupIndex = 1
+      Caption = 'Image'
+      Hint = 'Insert an image'
       ShowHint = True
       ParentShowHint = False
-      OnClick = ModeClick
-    end
-    object sbEdit: TSpeedButton
-      Tag = 1
-      Left = 204
-      Height = 28
-      Hint = 'Edit the rendered page in place'
-      Top = 5
-      Width = 48
-      Caption = 'Edit'
-      GroupIndex = 1
-      ShowHint = True
-      ParentShowHint = False
-      OnClick = ModeClick
-    end
-    object sbRaw: TSpeedButton
-      Tag = 2
-      Left = 252
-      Height = 28
-      Hint = 'The Markdown source'
-      Top = 5
-      Width = 48
-      Caption = 'Raw'
-      GroupIndex = 1
-      ShowHint = True
-      ParentShowHint = False
-      OnClick = ModeClick
+      OnClick = ImageClick
     end
     object btnKindH1: TSpeedButton
       Tag = 1
-      Left = 316
+      Left = 313
       Height = 28
       Hint = 'Heading 1'
       Top = 5
@@ -92,12 +146,11 @@ object frmMain: TfrmMain
       GroupIndex = 7
       ShowHint = True
       ParentShowHint = False
-      Visible = False
       OnClick = btnKindClick
     end
     object btnKindH2: TSpeedButton
       Tag = 2
-      Left = 350
+      Left = 348
       Height = 28
       Hint = 'Heading 2'
       Top = 5
@@ -107,12 +160,11 @@ object frmMain: TfrmMain
       GroupIndex = 7
       ShowHint = True
       ParentShowHint = False
-      Visible = False
       OnClick = btnKindClick
     end
     object btnKindBullet: TSpeedButton
       Tag = 7
-      Left = 384
+      Left = 383
       Height = 28
       Hint = 'Bullet list'
       Top = 5
@@ -122,7 +174,6 @@ object frmMain: TfrmMain
       GroupIndex = 7
       ShowHint = True
       ParentShowHint = False
-      Visible = False
       OnClick = btnKindClick
     end
     object btnKindNumber: TSpeedButton
@@ -137,12 +188,11 @@ object frmMain: TfrmMain
       GroupIndex = 7
       ShowHint = True
       ParentShowHint = False
-      Visible = False
       OnClick = btnKindClick
     end
     object btnKindQuote: TSpeedButton
       Tag = 9
-      Left = 444
+      Left = 445
       Height = 28
       Hint = 'Quote'
       Top = 5
@@ -152,12 +202,11 @@ object frmMain: TfrmMain
       GroupIndex = 7
       ShowHint = True
       ParentShowHint = False
-      Visible = False
       OnClick = btnKindClick
     end
     object btnKindCode: TSpeedButton
       Tag = 10
-      Left = 470
+      Left = 476
       Height = 28
       Hint = 'Code'
       Top = 5
@@ -167,11 +216,10 @@ object frmMain: TfrmMain
       GroupIndex = 7
       ShowHint = True
       ParentShowHint = False
-      Visible = False
       OnClick = btnKindClick
     end
     object btnTable: TSpeedButton
-      Left = 504
+      Left = 515
       Height = 28
       Hint = 'Insert a table - drag out the size, click to place it'
       Top = 5
@@ -179,61 +227,81 @@ object frmMain: TfrmMain
       Caption = 'Table'
       ShowHint = True
       ParentShowHint = False
-      Visible = False
       OnClick = btnTableClick
     end
-    object lblFile: TInkLabel
-      Left = 568
-      Height = 18
-      Top = 10
-      Width = 3
-      Caption = ' '
-      AutoSize = True
-      ParentColor = False
+  end
+  object lblFile: TInkLabel
+    Top = 696
+    Height = 24
+    Align = alBottom
+    BorderSpacing.Left = 8
+    BorderSpacing.Right = 8
+    AutoSize = False
+    Caption = ' '
+  end
+  object tabsViews: TTabControl
+    Left = 0
+    Top = 666
+    Height = 30
+    Width = 920
+    Align = alBottom
+    TabPosition = tpBottom
+    TabIndex = 0
+    Tabs.Strings = (
+      'Rendered'
+      'Raw'
+    )
+    OnChange = ModeTabChange
+  end
+  object pnlDocument: TPanel
+    Left = 0
+    Top = 38
+    Width = 920
+    Height = 628
+    Align = alClient
+    BevelOuter = bvNone
+    object reDoc: TInkRichEdit
+      Left = 0
+      Height = 682
+      Top = 38
+      Width = 920
+      Align = alClient
+      Font.Height = -15
+      ParentFont = False
+      TabOrder = 2
+      Visible = False
+      OnEnter = EditorEnter
+      OnLinkClick = PageLinkClick
+      OnChange = DocChanged
+      OnSelectionChange = DocSelectionChange
+      OnGoToSource = DocGoToSource
     end
-  end
-  object pageView: TInkPage
-    Cursor = crIBeam
-    Left = 0
-    Height = 682
-    Top = 38
-    Width = 920
-    OnLinkClick = PageLinkClick
-    Align = alClient
-    Color = clWindow
-    Font.Color = clWindowText
-    Font.Height = -15
-    ParentColor = False
-    ParentFont = False
-    TabOrder = 1
-  end
-  object reDoc: TInkRichEdit
-    Left = 0
-    Height = 682
-    Top = 38
-    Width = 920
-    Align = alClient
-    Font.Height = -15
-    ParentFont = False
-    TabOrder = 2
-    Visible = False
-    OnChange = DocChanged
-    OnSelectionChange = DocSelectionChange
-  end
-  object memRaw: TInkCodeMemo
-    Left = 0
-    Height = 682
-    Top = 38
-    Width = 920
-    Align = alClient
-    Font.Height = -13
-    ParentFont = False
-    TabOrder = 3
-    Visible = False
-    WantTabs = True
-    TextHint = 'Type Markdown here - # headings, **bold**, - lists, | tables |'
-    OnChange = RawChanged
-    OnGetCharAttrs = MdCharAttrs
+    object memRaw: TInkCodeMemo
+      Left = 0
+      Height = 682
+      Top = 38
+      Width = 920
+      Align = alClient
+      Font.Height = -13
+      ParentFont = False
+      TabOrder = 3
+      Visible = False
+      WantTabs = True
+      TextHint = 'Type Markdown here - # headings, **bold**, - lists, | tables |'
+      OnEnter = EditorEnter
+      OnSelectionChange = DocSelectionChange
+      OnChange = RawChanged
+      OnGetCharAttrs = MdCharAttrs
+    end
+    object splSource: TSplitter
+      Left = 454
+      Top = 0
+      Width = 6
+      Height = 628
+      Align = alRight
+      MinSize = 120
+      Visible = False
+    end
   end
   object mnuMain: TMainMenu
     Left = 680
@@ -280,24 +348,105 @@ object frmMain: TfrmMain
         OnClick = FileQuitClick
       end
     end
-    object mnuView: TMenuItem
-      Caption = '&View'
-      object miModeView: TMenuItem
-        Caption = '&Rendered page'
+    object mnuEdit: TMenuItem
+      Caption = '&Edit'
+      object miUndo: TMenuItem
+        Caption = '&Undo'
+        Tag = 1
+        ShortCut = 16474
+        OnClick = EditAction
+      end
+      object miRedo: TMenuItem
+        Caption = '&Redo'
+        Tag = 2
+        ShortCut = 16473
+        OnClick = EditAction
+      end
+      object miEditSep1: TMenuItem
+        Caption = '-'
+      end
+      object miCut: TMenuItem
+        Caption = 'Cu&t'
+        Tag = 8
+        ShortCut = 16472
+        OnClick = EditAction
+      end
+      object miCopy: TMenuItem
+        Caption = '&Copy'
+        Tag = 9
+        ShortCut = 16451
+        OnClick = EditAction
+      end
+      object miPaste: TMenuItem
+        Caption = '&Paste'
+        Tag = 10
+        ShortCut = 16470
+        OnClick = EditAction
+      end
+      object miSelectAll: TMenuItem
+        Caption = 'Select &All'
+        Tag = 11
+        ShortCut = 16449
+        OnClick = EditAction
+      end
+      object miEditSep2: TMenuItem
+        Caption = '-'
+      end
+      object miBold: TMenuItem
+        Caption = '&Bold'
+        Tag = 3
+        ShortCut = 16450
+        OnClick = EditAction
+      end
+      object miItalic: TMenuItem
+        Caption = '&Italic'
+        Tag = 4
+        ShortCut = 16457
+        OnClick = EditAction
+      end
+      object miStrike: TMenuItem
+        Caption = '&Strikethrough'
+        Tag = 5
+        ShortCut = 24664
+        OnClick = EditAction
+      end
+      object miInlineCode: TMenuItem
+        Caption = 'Inline c&ode'
+        Tag = 6
+        ShortCut = 16453
+        OnClick = EditAction
+      end
+      object miLink: TMenuItem
+        Caption = '&Link...'
+        Tag = 7
+        ShortCut = 16459
+        OnClick = EditAction
+      end
+      object miImage: TMenuItem
+        Caption = '&Image...'
+        OnClick = ImageClick
+      end
+    end
+    object mnuMode: TMenuItem
+      Caption = '&Mode'
+      object miModeEdit: TMenuItem
+        Caption = '&Rendered'
+        RadioItem = True
+        Checked = True
         ShortCut = 16433
         OnClick = ModeClick
       end
-      object miModeEdit: TMenuItem
+      object miModeRaw: TMenuItem
         Tag = 1
-        Caption = '&Edit the page'
+        Caption = '&Raw'
+        RadioItem = True
         ShortCut = 16434
         OnClick = ModeClick
       end
-      object miModeRaw: TMenuItem
-        Tag = 2
-        Caption = 'Ra&w source'
+      object miSplit: TMenuItem
+        Caption = '&Side by side'
         ShortCut = 16435
-        OnClick = ModeClick
+        OnClick = SplitClick
       end
     end
   end

@@ -60,6 +60,14 @@
         <ResourceBaseClass Value="Form"/>
         <UnitName Value="Main"/>
       </Unit>
+      <Unit>
+        <Filename Value="imageinsert.pas"/>
+        <IsPartOfProject Value="True"/>
+        <ComponentName Value="frmImageInsert"/>
+        <HasResources Value="True"/>
+        <ResourceBaseClass Value="Form"/>
+        <UnitName Value="ImageInsert"/>
+      </Unit>
     </Units>
   </ProjectOptions>
   <CompilerOptions>
