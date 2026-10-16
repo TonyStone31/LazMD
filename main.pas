@@ -139,6 +139,10 @@ type
     function ConfirmClose: boolean;
     function SaveFile: boolean;
     function SaveFileAs: boolean;
+    { the last folder browsed to, per kind ('Documents', 'Pictures'), kept
+      in LazMD's settings file; '' when none or it is gone }
+    function LastFolder(const Kind: string): string;
+    procedure KeepFolder(const Kind, FileName: string);
   public
     procedure LoadFile(const AFileName: string);
     { used by the --register / --unregister command line too }
@@ -153,7 +157,7 @@ implementation
 {$R *.lfm}
 
 uses
-  Math, LazFileUtils, URIParser, Process, InkDraw, InkMarkdown, MDSource, ImageInsert;
+  Math, IniFiles, LazFileUtils, URIParser, Process, InkDraw, InkMarkdown, MDSource, ImageInsert;
 
   { ------------------------------------------------------------------ startup }
 
@@ -307,14 +311,49 @@ begin
   Result := True;
 end;
 
+function TfrmMain.LastFolder(const Kind: string): string;
+var
+  Ini: TIniFile;
+begin
+  Ini := TIniFile.Create(GetAppConfigFile(False, True));
+  try
+    Result := Ini.ReadString('Folders', Kind, '');
+  finally
+    Ini.Free
+  end;
+  if (Result <> '') and not DirectoryExists(Result) then Result := '';
+end;
+
+procedure TfrmMain.KeepFolder(const Kind, FileName: string);
+var
+  Ini: TIniFile;
+begin
+  if FileName = '' then Exit;
+  try
+    ForceDirectories(ExtractFileDir(GetAppConfigFile(False, True)));
+    Ini := TIniFile.Create(GetAppConfigFile(False, True));
+    try
+      Ini.WriteString('Folders', Kind, ExtractFileDir(ExpandFileName(FileName)));
+    finally
+      Ini.Free
+    end;
+  except
+    { a settings file that cannot be written only costs the convenience }
+  end;
+end;
+
 function TfrmMain.SaveFileAs: boolean;
 var
   OldFile: string;
 begin
   if FFile <> '' then dlgSave.FileName := FFile
   else
+  begin
     dlgSave.FileName := 'untitled.md';
+    dlgSave.InitialDir := LastFolder('Documents');
+  end;
   if not dlgSave.Execute then Exit(False);
+  KeepFolder('Documents', dlgSave.FileName);
   OldFile := FFile;
   FFile := dlgSave.FileName;
   Result := SaveFile;
@@ -484,10 +523,14 @@ begin
   Picker := TfrmImageInsert.Create(Self);
   try
     Picker.Prepare(FFile, reDoc.SelText);
+    if LastFolder('Pictures') <> '' then Picker.dlgPicture.InitialDir := LastFolder('Pictures');
     Picker.chkRelative.Checked := FImageRelative;
     Picker.chkCopy.Checked := FImageCopy;
     Picker.edFolder.Text := FImageFolder;
-    if Picker.ShowModal = mrOk then
+    Picker.ShowModal;
+    { the dialog's file name is set only when Browse picked one }
+    KeepFolder('Pictures', Picker.dlgPicture.FileName);
+    if Picker.ModalResult = mrOk then
     begin
       FImageRelative := Picker.chkRelative.Checked;
       FImageCopy := Picker.chkCopy.Checked;
@@ -764,8 +807,13 @@ end;
 procedure TfrmMain.FileOpenClick(Sender: TObject);
 begin
   if not ConfirmClose then Exit;
-  if FFile <> '' then dlgOpen.InitialDir := ExtractFileDir(FFile);
-  if dlgOpen.Execute then LoadFile(dlgOpen.FileName);
+  dlgOpen.InitialDir := LastFolder('Documents');
+  if (dlgOpen.InitialDir = '') and (FFile <> '') then dlgOpen.InitialDir := ExtractFileDir(FFile);
+  if dlgOpen.Execute then
+  begin
+    KeepFolder('Documents', dlgOpen.FileName);
+    LoadFile(dlgOpen.FileName);
+  end;
 end;
 
 procedure TfrmMain.FileSaveClick(Sender: TObject);
