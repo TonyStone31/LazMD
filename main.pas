@@ -655,7 +655,8 @@ begin
   miStrike.Enabled := FMode = lmEdit;
   miInlineCode.Enabled := FMode = lmEdit;
   miLink.Enabled := FMode = lmEdit;
-  miImage.Enabled := (FMode = lmEdit) and not (reDoc.SelParaKind in [ipkCode, ipkSource]);
+  { in split view ImageClick goes to the edited side itself }
+  miImage.Enabled := ((FMode = lmEdit) or FSplit) and not (reDoc.SelParaKind in [ipkCode, ipkSource]);
   btnImage.Enabled := miImage.Enabled;
   btnKindH1.Down := reDoc.SelParaKind = ipkH1;
   btnKindH2.Down := reDoc.SelParaKind = ipkH2;

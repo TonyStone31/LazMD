@@ -151,6 +151,7 @@ begin
       Window.memRaw.Text := Window.memRaw.Text + ' appended';
       Window.RawChanged(nil);
       Check(Pos('appended', Window.reDoc.PlainText) > 0, 'raw edits update rendered split pane');
+      Check(Window.btnImage.Enabled, 'split view: Image works from the source pane too');
       Window.ModeClick(Window.miModeEdit);
       Window.reDoc.SelStart := Pos('world', Window.reDoc.PlainText) - 1;
       Window.reDoc.SelLength := 5;
