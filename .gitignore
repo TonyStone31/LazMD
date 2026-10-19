@@ -10,3 +10,6 @@ TODO*.md
 
 # The maintainer's tools stay private
 /tools/
+
+# The tests stay private
+/tests/

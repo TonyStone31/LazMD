@@ -98,8 +98,6 @@ small. The release builds were made with Lazarus 4.8 / FPC 3.2.4 on the
 Mac and Lazarus trunk on Linux, where Windows is cross-built; the source
 builds on either.
 
-`tests/run.sh` runs the checks; `tests/README.md` says how.
-
 ## Tested on
 
 Linux Mint with GTK3; Windows 10, in a virtual machine; macOS Sequoia 15 on
