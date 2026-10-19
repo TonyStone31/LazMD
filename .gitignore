@@ -6,3 +6,4 @@ lib/
 dist/
 backup/
 *.bak
+TODO*.md

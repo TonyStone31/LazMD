@@ -7,9 +7,12 @@ TARGET="$("$FPC" -iTP)-$("$FPC" -iTO)"
 BUILD_DIR=$(mktemp -d)
 trap 'rm -rf "$BUILD_DIR"' EXIT
 cd "$(dirname "$0")/.."
+# The component sources: beside this folder, or in MyLazComponents.
+PKGS=..
+[ -d "$PKGS/LazInk" ] || PKGS=../../MyLazComponents
 compile() {
-"$FPC" -gl -Cr -Co -Ci -Sa -Fu../LazInk -Fu. \
-  -Fu../FileAss/component/src -Fu../FileEye/src -Fu../FileEye/src/fpc -Fu../InfoBarToast/src \
+"$FPC" -gl -Cr -Co -Ci -Sa -Fu$PKGS/LazInk -Fu. \
+  -Fu$PKGS/FileAss/component/src -Fu$PKGS/FileEye/src -Fu$PKGS/FileEye/src/fpc -Fu$PKGS/InfoBarToast/src \
   -Fu"$LAZARUS_DIR/lcl/units/$TARGET" \
   -Fu"$LAZARUS_DIR/lcl/units/$TARGET/gtk3" \
   -Fu"$LAZARUS_DIR/components/lazutils/lib/$TARGET" \
@@ -19,7 +22,7 @@ compile() {
 }
 compile tests/source_tests.pas
 "$BUILD_DIR/source_tests"
-compile ../LazInk/tests/markdown_roundtrip_tests.pas
+compile $PKGS/LazInk/tests/markdown_roundtrip_tests.pas
 if [ -n "${MARKDOWN_SPEC:-}" ]; then "$BUILD_DIR/markdown_roundtrip_tests" "$MARKDOWN_SPEC"
 else "$BUILD_DIR/markdown_roundtrip_tests"; fi
 compile tests/editor_tests.pas
