@@ -6,6 +6,8 @@ set -eu
 TARGET="$("$FPC" -iTP)-$("$FPC" -iTO)"
 BUILD_DIR=$(mktemp -d)
 trap 'rm -rf "$BUILD_DIR"' EXIT
+# settings the tests write go to a throwaway folder
+export XDG_CONFIG_HOME="$BUILD_DIR/config"
 cd "$(dirname "$0")/.."
 # The component sources: beside this folder, or in MyLazComponents.
 PKGS=..

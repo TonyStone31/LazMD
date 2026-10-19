@@ -7,3 +7,6 @@ dist/
 backup/
 *.bak
 TODO*.md
+
+# The maintainer's tools stay private
+/tools/

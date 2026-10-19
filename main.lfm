@@ -265,6 +265,7 @@ object frmMain: TfrmMain
       OnChange = DocChanged
       OnSelectionChange = DocSelectionChange
       OnGoToSource = DocGoToSource
+      OnZoom = DocZoom
     end
     object memRaw: TInkCodeMemo
       Left = 0
@@ -282,6 +283,7 @@ object frmMain: TfrmMain
       OnSelectionChange = DocSelectionChange
       OnChange = RawChanged
       OnGetCharAttrs = MdCharAttrs
+      OnZoom = DocZoom
     end
     object splSource: TSplitter
       Left = 454
@@ -443,6 +445,26 @@ object frmMain: TfrmMain
         Caption = '&Side by side'
         ShortCut = 16435
         OnClick = SplitClick
+      end
+      object miZoomSep: TMenuItem
+        Caption = '-'
+      end
+      object miZoomIn: TMenuItem
+        Tag = 1
+        Caption = 'Zoom &In'
+        ShortCut = 16571
+        OnClick = ZoomClick
+      end
+      object miZoomOut: TMenuItem
+        Tag = -1
+        Caption = 'Zoom &Out'
+        ShortCut = 16573
+        OnClick = ZoomClick
+      end
+      object miZoomReset: TMenuItem
+        Caption = '&Actual Size'
+        ShortCut = 16432
+        OnClick = ZoomClick
       end
     end
   end

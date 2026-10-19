@@ -15,6 +15,7 @@ uses
   InkMarkdown,
   FileEye,
   ImageInsert,
+  IniFiles,
   URIParser;
 
 type
@@ -69,6 +70,7 @@ var
   FileName, Source, PictureName, InsertedSource, AssetsDir, FirstCopy, NextCopy: string;
   Picker: TfrmImageInsert;
   Shot: TBitmap;
+  Ini: TIniFile;
   Checks: integer;
   Changes: TChanges;
   Target: integer;
@@ -317,6 +319,22 @@ begin
           Shot.Free
         end;
       end;
+      { one zoom for both views, from the menu or from either view's keys,
+        kept in the settings file }
+      Window.ZoomClick(Window.miZoomIn);
+      Check((Window.reDoc.Zoom = 110) and (Window.memRaw.Zoom = 110), 'Zoom In zooms both views');
+      Window.memRaw.Zoom := 150;
+      Check(Window.reDoc.Zoom = 150, 'a zoom in the source view reaches the page');
+      Ini := TIniFile.Create(GetAppConfigFile(False, True));
+      try
+        Check(Ini.ReadInteger('View', 'Zoom', 0) = 150, 'the zoom is remembered');
+      finally
+        Ini.Free;
+      end;
+      Window.ZoomClick(Window.miZoomOut);
+      Check(Window.memRaw.Zoom = 125, 'Zoom Out steps both back');
+      Window.ZoomClick(Window.miZoomReset);
+      Check((Window.reDoc.Zoom = 100) and (Window.memRaw.Zoom = 100), 'Actual Size puts both back');
       WriteLn(Checks, ' editor checks passed.');
     finally
       Window.Free;

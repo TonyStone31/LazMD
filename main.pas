@@ -65,6 +65,7 @@ type
     miUndo, miRedo, miCut, miCopy, miPaste, miSelectAll, miFind: TMenuItem;
     miBold, miItalic, miStrike, miInlineCode, miLink, miImage: TMenuItem;
     miModeEdit, miModeRaw, miSplit: TMenuItem;
+    miZoomSep, miZoomIn, miZoomOut, miZoomReset: TMenuItem;
 
     pnlTools, pnlDocument: TPanel;
     splSource: TSplitter;
@@ -95,6 +96,8 @@ type
     procedure ModeClick(Sender: TObject);
     procedure ToolsResize(Sender: TObject);
     procedure SplitClick(Sender: TObject);
+    procedure ZoomClick(Sender: TObject);
+    procedure DocZoom(Sender: TObject);
     procedure EditorEnter(Sender: TObject);
     procedure EditAction(Sender: TObject);
     procedure ImageClick(Sender: TObject);
@@ -143,6 +146,9 @@ type
       in LazMD's settings file; '' when none or it is gone }
     function LastFolder(const Kind: string): string;
     procedure KeepFolder(const Kind, FileName: string);
+    { the zoom both views share, kept in the settings file }
+    function SavedZoom: integer;
+    procedure KeepZoom(AZoom: integer);
   public
     procedure LoadFile(const AFileName: string);
     { used by the --register / --unregister command line too }
@@ -157,7 +163,7 @@ implementation
 {$R *.lfm}
 
 uses
-  Math, IniFiles, LazFileUtils, URIParser, Process, InkDraw, InkMarkdown, MDSource, ImageInsert;
+  Math, IniFiles, LazFileUtils, URIParser, Process, InkDraw, InkMarkdown, InkTouch, MDSource, ImageInsert;
 
   { ------------------------------------------------------------------ startup }
 
@@ -170,6 +176,7 @@ begin
   FImageFolder := 'assets';
   SetMode(lmEdit);
   ToolsResize(nil);
+  reDoc.Zoom := SavedZoom;
   ShowTitle;
 end;
 
@@ -342,6 +349,35 @@ begin
   end;
 end;
 
+function TfrmMain.SavedZoom: integer;
+var
+  Ini: TIniFile;
+begin
+  Ini := TIniFile.Create(GetAppConfigFile(False, True));
+  try
+    Result := Ini.ReadInteger('View', 'Zoom', 100);
+  finally
+    Ini.Free
+  end;
+end;
+
+procedure TfrmMain.KeepZoom(AZoom: integer);
+var
+  Ini: TIniFile;
+begin
+  try
+    ForceDirectories(ExtractFileDir(GetAppConfigFile(False, True)));
+    Ini := TIniFile.Create(GetAppConfigFile(False, True));
+    try
+      Ini.WriteInteger('View', 'Zoom', AZoom);
+    finally
+      Ini.Free
+    end;
+  except
+    { a settings file that cannot be written only costs the convenience }
+  end;
+end;
+
 function TfrmMain.SaveFileAs: boolean;
 var
   OldFile: string;
@@ -505,6 +541,28 @@ begin
   FSplit := not FSplit;
   if FSplit then memRaw.Width := Max(160, pnlDocument.ClientWidth div 2);
   SetMode(FMode);
+end;
+
+{ Zoom In, Zoom Out (Tag 1 and -1) and Actual Size; the views' own
+  Ctrl+wheel and Ctrl+plus/minus/0 come through DocZoom }
+procedure TfrmMain.ZoomClick(Sender: TObject);
+begin
+  if TMenuItem(Sender).Tag = 0 then reDoc.Zoom := 100
+  else
+    reDoc.Zoom := InkZoomStep(reDoc.Zoom, TMenuItem(Sender).Tag);
+end;
+
+{ one zoom for both views, remembered for the next start }
+procedure TfrmMain.DocZoom(Sender: TObject);
+var
+  Z: integer;
+begin
+  Z := TInkRichEdit(Sender).Zoom;
+  reDoc.Zoom := Z;
+  memRaw.Zoom := Z;
+  if not Showing then Exit;
+  KeepZoom(Z);
+  Toast.Show(Format('Zoom %d%%', [Z]));
 end;
 
 procedure TfrmMain.EditorEnter(Sender: TObject);

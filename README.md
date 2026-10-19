@@ -34,6 +34,10 @@ document once it has been saved.
 Ctrl+F finds text in either pane: matches as you type, Enter or F3 for
 the next, Shift for the one before, Esc to close.
 
+Ctrl+wheel, Ctrl+plus and Ctrl+minus zoom both panes together, and
+Ctrl+0 puts them back to normal; the same is in the **Mode** menu. The
+zoom is kept for the next start.
+
 Drop a file on the window to open it. When another program changes the
 open file, LazMD reloads it and shows a short notice; if there are unsaved
 edits, a bar above the text asks whether to reload or keep them. Nothing
