@@ -12,7 +12,8 @@ One document per window, in three modes from the **Mode** menu:
   quotes, code blocks, tables and images. Task checkboxes toggle with a
   click. Ctrl+click follows a link: web links open in the browser, links to
   other Markdown files open in LazMD. Right-click, **Go to source**, shows
-  the same spot in Raw.
+  the same spot in Raw. Code blocks are colored by their language, and a
+  `diff` block shows what was added and what was taken out.
 - **Raw** (Ctrl+2) — the Markdown source, with syntax coloring.
 - **Side by side** (Ctrl+3) — both at once, each following the other's
   edits.
