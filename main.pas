@@ -96,6 +96,7 @@ type
     procedure ModeClick(Sender: TObject);
     procedure ToolsResize(Sender: TObject);
     procedure SplitClick(Sender: TObject);
+    procedure SourceMoved(Sender: TObject);
     procedure ZoomClick(Sender: TObject);
     procedure DocZoom(Sender: TObject);
     procedure EditorEnter(Sender: TObject);
@@ -146,9 +147,10 @@ type
       in LazMD's settings file; '' when none or it is gone }
     function LastFolder(const Kind: string): string;
     procedure KeepFolder(const Kind, FileName: string);
-    { the zoom both views share, kept in the settings file }
-    function SavedZoom: integer;
-    procedure KeepZoom(AZoom: integer);
+    { the view - zoom, mode, side by side, the source pane's width - kept
+      in the settings file's [View] }
+    function SavedView(const Key: string; Default: integer): integer;
+    procedure KeepView(const Key: string; Value: integer);
   public
     procedure LoadFile(const AFileName: string);
     { used by the --register / --unregister command line too }
@@ -174,9 +176,12 @@ begin
   FEditFresh := True;
   FImageRelative := True;
   FImageFolder := 'assets';
-  SetMode(lmEdit);
+  { the view it was left in }
+  FSplit := SavedView('Split', 0) = 1;
+  if FSplit then memRaw.Width := Max(160, pnlDocument.ClientWidth * EnsureRange(SavedView('SourceWidth', 50), 10, 90) div 100);
+  SetMode(TLazMDMode(EnsureRange(SavedView('Mode', 0), Ord(Low(TLazMDMode)), Ord(High(TLazMDMode)))));
   ToolsResize(nil);
-  reDoc.Zoom := SavedZoom;
+  reDoc.Zoom := SavedView('Zoom', 100);
   ShowTitle;
 end;
 
@@ -260,7 +265,8 @@ begin
   FEditFresh := False;
   reDoc.Modified := False;
   MdRecolor;
-  SetMode(lmEdit);
+  { a file opens in the view that was chosen }
+  SetMode(FMode);
   ShowTitle;
   Eye.Path := FFile;
   Eye.Enabled := True;
@@ -349,19 +355,19 @@ begin
   end;
 end;
 
-function TfrmMain.SavedZoom: integer;
+function TfrmMain.SavedView(const Key: string; Default: integer): integer;
 var
   Ini: TIniFile;
 begin
   Ini := TIniFile.Create(GetAppConfigFile(False, True));
   try
-    Result := Ini.ReadInteger('View', 'Zoom', 100);
+    Result := Ini.ReadInteger('View', Key, Default);
   finally
     Ini.Free
   end;
 end;
 
-procedure TfrmMain.KeepZoom(AZoom: integer);
+procedure TfrmMain.KeepView(const Key: string; Value: integer);
 var
   Ini: TIniFile;
 begin
@@ -369,7 +375,7 @@ begin
     ForceDirectories(ExtractFileDir(GetAppConfigFile(False, True)));
     Ini := TIniFile.Create(GetAppConfigFile(False, True));
     try
-      Ini.WriteInteger('View', 'Zoom', AZoom);
+      Ini.WriteInteger('View', Key, Value);
     finally
       Ini.Free
     end;
@@ -533,14 +539,23 @@ end;
 procedure TfrmMain.ModeClick(Sender: TObject);
 begin
   SetMode(TLazMDMode((Sender as TComponent).Tag));
+  KeepView('Mode', Ord(FMode));
 end;
 
 procedure TfrmMain.SplitClick(Sender: TObject);
 begin
   PullFromEditor;
   FSplit := not FSplit;
-  if FSplit then memRaw.Width := Max(160, pnlDocument.ClientWidth div 2);
+  if FSplit then memRaw.Width := Max(160, pnlDocument.ClientWidth * EnsureRange(SavedView('SourceWidth', 50), 10, 90) div 100);
   SetMode(FMode);
+  KeepView('Split', Ord(FSplit));
+end;
+
+{ the source pane's share of the width, kept as a percentage so it suits
+  the next window's size }
+procedure TfrmMain.SourceMoved(Sender: TObject);
+begin
+  if pnlDocument.ClientWidth > 0 then KeepView('SourceWidth', memRaw.Width * 100 div pnlDocument.ClientWidth);
 end;
 
 { Zoom In, Zoom Out (Tag 1 and -1) and Actual Size; the views' own
@@ -561,7 +576,7 @@ begin
   reDoc.Zoom := Z;
   memRaw.Zoom := Z;
   if not Showing then Exit;
-  KeepZoom(Z);
+  KeepView('Zoom', Z);
   Toast.Show(Format('Zoom %d%%', [Z]));
 end;
 
@@ -858,7 +873,8 @@ begin
   FEditFresh := False;
   reDoc.Modified := False;
   MdRecolor;
-  SetMode(lmEdit);
+  { a file opens in the view that was chosen }
+  SetMode(FMode);
   ShowTitle;
 end;
 
