@@ -15,7 +15,8 @@ LAZBUILD=${LAZBUILD:-lazbuild}
 # -g- first: the project's debug info makes FPC ignore -Xs; -XX -CX drops unused code
 release="-g- -O2 -Xs -XX -CX"
 
-# pack <zip name> <program>: the program, the README and the license
+# pack <zip name> <program>: the program, the README and the license; on
+# Linux also the icon the file association installs, found beside the program
 pack() {
   local tmp
   tmp=$(mktemp -d)
@@ -25,9 +26,10 @@ pack() {
   # debug information stays out of the zip; a stripper that is missing is no reason to stop
   case "$2" in
     *.exe) x86_64-w64-mingw32-strip --strip-all "$tmp/$2" 2>/dev/null || true ;;
-    *) strip --strip-all "$tmp/$2" 2>/dev/null || true ;;
+    *) strip --strip-all "$tmp/$2" 2>/dev/null || true
+       mkdir "$tmp/icons" && cp icons/lazmd.svg "$tmp/icons/" ;;
   esac
-  (cd "$tmp" && zip -q -9 "$OLDPWD/dist/$1" ./*)
+  (cd "$tmp" && zip -q -r -9 "$OLDPWD/dist/$1" ./*)
   rm -rf "$tmp"
   ls -la "dist/$1"
 }

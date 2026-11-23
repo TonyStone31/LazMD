@@ -9,6 +9,7 @@ object frmMain: TfrmMain
   ClientWidth = 920
   Menu = mnuMain
   Position = poScreenCenter
+  SessionProperties = 'Height;Left;Top;Width;WindowState'
   LCLVersion = '5.99.0.0'
   OnCloseQuery = FormCloseQuery
   OnCreate = FormCreate
@@ -249,6 +250,7 @@ object frmMain: TfrmMain
     Height = 628
     Align = alClient
     BevelOuter = bvNone
+    OnResize = DocumentResize
     object reDoc: TInkRichEdit
       Left = 0
       Height = 682
@@ -511,5 +513,13 @@ object frmMain: TfrmMain
   object Toast: TToast
     Left = 680
     Top = 440
+  end
+  object WindowStorage: TIniPropStorage
+    StoredValues = <>
+    IniSection = 'Window'
+    OnSaveProperties = WindowSaved
+    OnRestoreProperties = WindowRestored
+    Left = 680
+    Top = 500
   end
 end

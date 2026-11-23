@@ -22,7 +22,7 @@ interface
 
 uses
   Classes, SysUtils, Forms, Controls, Graphics, Dialogs, Menus, Buttons,
-  ExtCtrls, StdCtrls, LCLIntf, LCLType, LazUTF8,
+  ExtCtrls, StdCtrls, LCLIntf, LCLType, LazUTF8, IniPropStorage,
   InkRichEdit, InkCodeMemo, InkLabel,
   FileAssMan, FATypes, FileEye, InfoBar, Toast;
 
@@ -82,6 +82,7 @@ type
     Eye: TFileEye;
     Bar: TInfoBar;
     Toast: TToast;
+    WindowStorage: TIniPropStorage;
 
     procedure FormCreate(Sender: TObject);
     procedure FormCloseQuery(Sender: TObject; var CanClose: boolean);
@@ -97,6 +98,9 @@ type
     procedure ToolsResize(Sender: TObject);
     procedure SplitClick(Sender: TObject);
     procedure SourceMoved(Sender: TObject);
+    procedure DocumentResize(Sender: TObject);
+    procedure WindowRestored(Sender: TObject);
+    procedure WindowSaved(Sender: TObject);
     procedure ZoomClick(Sender: TObject);
     procedure DocZoom(Sender: TObject);
     procedure EditorEnter(Sender: TObject);
@@ -117,6 +121,7 @@ type
     FFile: string;
     FMode: TLazMDMode;
     FSplit: boolean;
+    FSourceShare: double; // the source pane's share of the width, 0.1 to 0.9
     FToolsLayout: boolean;
     FImageRelative, FImageCopy: boolean;
     FImageFolder: string;
@@ -151,6 +156,7 @@ type
       in the settings file's [View] }
     function SavedView(const Key: string; Default: integer): integer;
     procedure KeepView(const Key: string; Value: integer);
+    procedure FitSource;
   public
     procedure LoadFile(const AFileName: string);
     { used by the --register / --unregister command line too }
@@ -176,9 +182,12 @@ begin
   FEditFresh := True;
   FImageRelative := True;
   FImageFolder := 'assets';
+  { the window where it was left; WindowRestored runs after this }
+  WindowStorage.IniFileName := GetAppConfigFile(False, True);
   { the view it was left in }
   FSplit := SavedView('Split', 0) = 1;
-  if FSplit then memRaw.Width := Max(160, pnlDocument.ClientWidth * EnsureRange(SavedView('SourceWidth', 50), 10, 90) div 100);
+  FSourceShare := EnsureRange(SavedView('SourceWidth', 50), 10, 90) / 100;
+  FitSource;
   SetMode(TLazMDMode(EnsureRange(SavedView('Mode', 0), Ord(Low(TLazMDMode)), Ord(High(TLazMDMode)))));
   ToolsResize(nil);
   reDoc.Zoom := SavedView('Zoom', 100);
@@ -546,7 +555,7 @@ procedure TfrmMain.SplitClick(Sender: TObject);
 begin
   PullFromEditor;
   FSplit := not FSplit;
-  if FSplit then memRaw.Width := Max(160, pnlDocument.ClientWidth * EnsureRange(SavedView('SourceWidth', 50), 10, 90) div 100);
+  FitSource;
   SetMode(FMode);
   KeepView('Split', Ord(FSplit));
 end;
@@ -555,7 +564,41 @@ end;
   the next window's size }
 procedure TfrmMain.SourceMoved(Sender: TObject);
 begin
-  if pnlDocument.ClientWidth > 0 then KeepView('SourceWidth', memRaw.Width * 100 div pnlDocument.ClientWidth);
+  if pnlDocument.ClientWidth <= 0 then Exit;
+  FSourceShare := EnsureRange(memRaw.Width / pnlDocument.ClientWidth, 0.1, 0.9);
+  KeepView('SourceWidth', Round(FSourceShare * 100));
+end;
+
+{ side by side keeps its proportion as the window changes size }
+procedure TfrmMain.FitSource;
+begin
+  if FSplit and (pnlDocument.ClientWidth > 0) then
+    memRaw.Width := Max(splSource.MinSize, Min(Round(pnlDocument.ClientWidth * FSourceShare), pnlDocument.ClientWidth - splSource.Width - splSource.MinSize));
+end;
+
+procedure TfrmMain.DocumentResize(Sender: TObject);
+begin
+  FitSource;
+end;
+
+{ Saved geometry wins over centering, and stays on a screen that is still
+  there; a window closed minimized comes back normal. }
+procedure TfrmMain.WindowRestored(Sender: TObject);
+begin
+  if WindowStorage.ReadInteger(Name + '_Width', 0) <= 0 then Exit;
+  Position := poDesigned;
+  if WindowState = wsMinimized then WindowState := wsNormal;
+  MakeFullyVisible;
+end;
+
+{ a maximized window keeps the size it returns to }
+procedure TfrmMain.WindowSaved(Sender: TObject);
+begin
+  if WindowState <> wsMaximized then Exit;
+  WindowStorage.WriteInteger(Name + '_Left', RestoredLeft);
+  WindowStorage.WriteInteger(Name + '_Top', RestoredTop);
+  WindowStorage.WriteInteger(Name + '_Width', RestoredWidth);
+  WindowStorage.WriteInteger(Name + '_Height', RestoredHeight);
 end;
 
 { Zoom In, Zoom Out (Tag 1 and -1) and Actual Size; the views' own
@@ -783,9 +826,13 @@ begin
 end;
 
 procedure TfrmMain.btnKindClick(Sender: TObject);
+var
+  Want: boolean;
 begin
+  { read the press first: SetMode sets every button from the caret again }
+  Want := (Sender as TSpeedButton).Down;
   if FSplit then SetMode(lmEdit);
-  if (Sender as TSpeedButton).Down then
+  if Want then
     reDoc.ApplyParaKind(TInkParaKind((Sender as TSpeedButton).Tag))
   else
     reDoc.ApplyParaKind(ipkText);

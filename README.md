@@ -37,7 +37,11 @@ the next, Shift for the one before, Esc to close.
 
 Ctrl+wheel, Ctrl+plus and Ctrl+minus zoom both panes together, and
 Ctrl+0 puts them back to normal; the same is in the **Mode** menu. The
-zoom is kept for the next start.
+zoom, the mode, the window's place and size, and where the two panes of
+Side by side divide are kept for the next start.
+
+A table wider than the window scrolls sideways: the scroll bar at the
+bottom, Shift+wheel, a sideways swipe, or just moving the caret along a row.
 
 Drop a file on the window to open it. When another program changes the
 open file, LazMD reloads it and shows a short notice; if there are unsaved
@@ -61,8 +65,9 @@ fetch.
   GTK3, which every current desktop has.
 - **Windows** — `lazmd-windows-x86_64.zip`. Unzip and run `lazmd.exe`.
 - **macOS** — `lazmd-macos.zip`. Unzip, drag `LazMD.app` to Applications.
-  It is not signed, so the first time, right-click it and choose Open to
-  get past Gatekeeper.
+  It is not signed, so macOS refuses it the first time. Open it once, then
+  in System Settings, Privacy & Security, choose Open Anyway. On macOS 14
+  and earlier, right-click it and choose Open instead.
 
 ## Use it for Markdown files
 
